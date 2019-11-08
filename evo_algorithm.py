@@ -1,5 +1,7 @@
 import numpy as np
 
+from evo_operators import single_point_crossover
+
 
 class BasicEvoStrategy:
     def __init__(self, evo_operators: dict, meta_params: dict, source_matrix):
@@ -18,8 +20,10 @@ class BasicEvoStrategy:
         while not self.__stop_criteria():
             print(self.cur_gen)
             self.__assign_fitness_values()
-            graded = self.__graded_by_fitness()
-
+            top = self.__graded_by_fitness()[0]
+            print(f'Best candidate with fitness: {top.fitness_value}')
+            new_pop = self.__new_offspring()
+            self.pop = new_pop
             self.cur_gen += 1
 
     def __init_population(self):
@@ -36,6 +40,36 @@ class BasicEvoStrategy:
         pop = np.copy(self.pop)
         return sorted(pop, key=lambda p: p.fitness_value)
 
+    def __new_offspring(self):
+        graded = self.__graded_by_fitness()
+        k_best = int(len(graded) * 0.25)
+        offspring = select_k_best(candidates=graded, k=k_best)
+        childs_total = int(len(graded) * 0.75)
+        childs_amount = 0
+        while childs_amount < childs_total:
+            parent_first, parent_second = np.random.choice(offspring), np.random.choice(offspring)
+
+            # TODO: refactor this
+            u_first, u_second = single_point_crossover(parent_first=parent_first.genotype[0],
+                                                       parent_second=parent_second.genotype[0])
+            s_first, s_second = single_point_crossover(parent_first=parent_first.genotype[1],
+                                                       parent_second=parent_second.genotype[1])
+            vh_first, vh_second = single_point_crossover(parent_first=parent_first.genotype[2],
+                                                         parent_second=parent_second.genotype[2])
+
+            child_first = MatrixIndivid(genotype=(u_first, s_first, vh_first))
+            child_second = MatrixIndivid(genotype=(u_second, s_second, vh_second))
+
+            # for val in ['u', 's', 'vh']:
+            #     first_val, second_val = getattr(parent_first, val), getattr(parent_second, val)
+            #
+            #     single_point_crossover(parent_first=first_val, parent_second=second_val)
+
+            offspring.extend([child_first, child_second])
+            childs_amount += 2
+
+        return offspring
+
     def __stop_criteria(self):
         return self.cur_gen >= self.generations
 
@@ -44,3 +78,8 @@ class MatrixIndivid:
     def __init__(self, genotype):
         self.genotype = genotype
         self.fitness_value = None
+
+
+def select_k_best(candidates, k):
+    assert k <= len(candidates)
+    return candidates[:k]
