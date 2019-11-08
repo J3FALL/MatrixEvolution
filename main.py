@@ -11,7 +11,7 @@ if __name__ == '__main__':
     evo_operators = {'new_individ': new_individ_random_svd,
                      'fitness': fitness_frob_norm}
     meta_params = {'pop_size': 100,
-                   'generations': 300}
+                   'generations': 1000}
     evo_strategy = BasicEvoStrategy(evo_operators=evo_operators, meta_params=meta_params, source_matrix=source_matrix)
 
     evo_strategy.run()

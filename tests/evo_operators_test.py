@@ -3,7 +3,8 @@ import numpy as np
 from evo_operators import (
     fitness_frob_norm,
     random_matrix,
-    single_point_crossover
+    single_point_crossover,
+    mutation_gauss
 )
 
 
@@ -45,3 +46,13 @@ def test_single_point_crossover_correct():
     print(f'Child second{child_second}')
 
     assert parent_first.shape == child_first.shape == child_second.shape
+
+
+def test_mutation_gauss_correct():
+    candidate = random_matrix(matrix_size=(10, 10))
+    source_shape = candidate.shape
+    mu, sigma = 0, 0.1
+    prob_global = 0.05
+    resulted = mutation_gauss(candidate=candidate, mu=mu, sigma=sigma, prob_global=prob_global)
+
+    assert source_shape == resulted.shape

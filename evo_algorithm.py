@@ -1,6 +1,9 @@
 import numpy as np
 
-from evo_operators import single_point_crossover
+from evo_operators import (
+    single_point_crossover,
+    mutation_gauss
+)
 
 
 class BasicEvoStrategy:
@@ -23,6 +26,11 @@ class BasicEvoStrategy:
             top = self.__graded_by_fitness()[0]
             print(f'Best candidate with fitness: {top.fitness_value}')
             new_pop = self.__new_offspring()
+
+            mutations_amount = int(len(new_pop) * 0.5)
+            for _ in range(mutations_amount):
+                idx = np.random.randint(len(new_pop) - 1)
+                new_pop[idx] = mutated_individ(new_pop[idx])
             self.pop = new_pop
             self.cur_gen += 1
 
@@ -83,3 +91,13 @@ class MatrixIndivid:
 def select_k_best(candidates, k):
     assert k <= len(candidates)
     return candidates[:k]
+
+
+def mutated_individ(source_individ):
+    u_mutated = mutation_gauss(candidate=source_individ.genotype[0], mu=0, sigma=0.2, prob_global=0.3)
+    s_mutated = mutation_gauss(candidate=source_individ.genotype[1], mu=0, sigma=0.2, prob_global=0.3)
+    vh_mutated = mutation_gauss(candidate=source_individ.genotype[2], mu=0, sigma=0.2, prob_global=0.3)
+
+    resulted = MatrixIndivid(genotype=(u_mutated, s_mutated, vh_mutated))
+
+    return resulted

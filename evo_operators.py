@@ -42,6 +42,15 @@ def single_point_crossover(parent_first, parent_second, type='horizontal'):
     return child_first, child_second
 
 
+def mutation_gauss(candidate, mu, sigma, prob_global):
+    source_shape = candidate.shape
+    resulted = np.ndarray.flatten(candidate)
+    for idx in range(len(resulted)):
+        if np.random.random() < prob_global:
+            resulted[idx] = np.random.normal(mu, sigma)
+    return resulted.reshape(source_shape)
+
+
 def random_matrix(matrix_size):
     size_a, size_b = matrix_size
     matrix = np.random.rand(size_a, size_b)
