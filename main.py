@@ -13,8 +13,8 @@ if __name__ == '__main__':
     source_matrix = np.random.rand(10, 10)
     evo_operators = {'new_individ': new_individ_random_svd,
                      'fitness': fitness_frob_norm}
-    meta_params = {'pop_size': 500,
-                   'generations': 500}
+    meta_params = {'pop_size': 100,
+                   'generations': 100}
 
     evo_history = EvoHistory()
 
@@ -24,4 +24,4 @@ if __name__ == '__main__':
                                         history=evo_history, source_matrix=source_matrix)
         evo_strategy.run()
 
-    evo_history.loss_history_boxplots(save_to_file=False)
+    evo_history.loss_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=5)

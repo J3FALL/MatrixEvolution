@@ -5,8 +5,8 @@ import numpy as np
 import seaborn as sns
 
 from evo_operators import (
-    single_point_crossover,
-    mutation_gauss
+    mutation_gauss,
+    single_point_crossover
 )
 
 
@@ -66,22 +66,7 @@ class BasicEvoStrategy:
 
         while childs_amount < childs_total:
             parent_first, parent_second = np.random.choice(offspring), np.random.choice(offspring)
-
-            # TODO: refactor this
-            crossover_type = np.random.choice(['horizontal', 'vertical'])
-            u_first, u_second = single_point_crossover(parent_first=parent_first.genotype[0],
-                                                       parent_second=parent_second.genotype[0],
-                                                       type=crossover_type)
-            s_first, s_second = single_point_crossover(parent_first=parent_first.genotype[1],
-                                                       parent_second=parent_second.genotype[1],
-                                                       type='horizontal')
-            vh_first, vh_second = single_point_crossover(parent_first=parent_first.genotype[2],
-                                                         parent_second=parent_second.genotype[2],
-                                                         type=crossover_type)
-
-            child_first = MatrixIndivid(genotype=(u_first, s_first, vh_first))
-            child_second = MatrixIndivid(genotype=(u_second, s_second, vh_second))
-
+            child_first, child_second = separate_crossover(parent_first, parent_second)
             # for val in ['u', 's', 'vh']:
             #     first_val, second_val = getattr(parent_first, val), getattr(parent_second, val)
             #
@@ -139,25 +124,28 @@ class EvoHistory:
         )
 
     # TODO: refactor this
-    def loss_history_boxplots(self, save_to_file=False, dir='', title='Fitness history by generations'):
+    def loss_history_boxplots(self, values_to_plot='min', save_to_file=False,
+                              dir='', title='Fitness history by generations', gens_ticks=5):
         gens = [gen for gen in range(len(self.__history[0]))]
 
-        avg_loss_by_gens = []
+        avg_fitness_by_gens = []
+
+        value_idx = 1 if values_to_plot == 'min' else 0
 
         for gen in gens:
             avg_loss_by_gen = []
             for run_id in self.__history.keys():
-                avg_loss = self.__history[run_id][gen][1]
+                avg_loss = self.__history[run_id][gen][value_idx]
                 avg_loss_by_gen.append(avg_loss)
-            avg_loss_by_gens.append(avg_loss_by_gen)
+            avg_fitness_by_gens.append(avg_loss_by_gen)
 
         reduced_gens = []
         reduced_loss = []
 
         for gen in gens:
-            if gen % 50 == 0:
+            if gen % gens_ticks == 0:
                 reduced_gens.append(gen)
-                reduced_loss.append(avg_loss_by_gens[gen])
+                reduced_loss.append(avg_fitness_by_gens[gen])
 
         sns.boxplot(reduced_gens, reduced_loss, color="seagreen")
 
@@ -169,3 +157,44 @@ class EvoHistory:
             plt.savefig(os.path.join(dir, 'loss_history_boxplots.png'))
         else:
             plt.show()
+
+
+def separate_crossover(parent_first, parent_second):
+    crossover_type = np.random.choice(['horizontal', 'vertical'])
+
+    u_first, u_second = single_point_crossover(parent_first=parent_first.genotype[0],
+                                               parent_second=parent_second.genotype[0],
+                                               type=crossover_type)
+    s_first, s_second = single_point_crossover(parent_first=parent_first.genotype[1],
+                                               parent_second=parent_second.genotype[1],
+                                               type='horizontal')
+    vh_first, vh_second = single_point_crossover(parent_first=parent_first.genotype[2],
+                                                 parent_second=parent_second.genotype[2],
+                                                 type=crossover_type)
+
+    child_first = MatrixIndivid(genotype=(u_first, s_first, vh_first))
+    child_second = MatrixIndivid(genotype=(u_second, s_second, vh_second))
+
+    return child_first, child_second
+
+
+def joint_crossover(parent_first, parent_second):
+    # TODO: refactor this
+    crossover_type = np.random.choice(['horizontal', 'vertical'])
+
+    min_size = np.min(parent_first.genotype[0].shape)
+    cross_point = np.random.randint(0, min_size - 1)
+    u_first, u_second = single_point_crossover(parent_first=parent_first.genotype[0],
+                                               parent_second=parent_second.genotype[0],
+                                               type=crossover_type, cross_point=cross_point)
+    s_first, s_second = single_point_crossover(parent_first=parent_first.genotype[1],
+                                               parent_second=parent_second.genotype[1],
+                                               type='horizontal', cross_point=cross_point)
+    vh_first, vh_second = single_point_crossover(parent_first=parent_first.genotype[2],
+                                                 parent_second=parent_second.genotype[2],
+                                                 type=crossover_type, cross_point=cross_point)
+
+    child_first = MatrixIndivid(genotype=(u_first, s_first, vh_first))
+    child_second = MatrixIndivid(genotype=(u_second, s_second, vh_second))
+
+    return child_first, child_second
