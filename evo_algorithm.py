@@ -6,7 +6,8 @@ import seaborn as sns
 
 from evo_operators import (
     mutation_gauss,
-    single_point_crossover
+    single_point_crossover,
+    select_by_tournament
 )
 
 
@@ -58,10 +59,14 @@ class BasicEvoStrategy:
         return sorted(pop, key=lambda p: p.fitness_value)
 
     def __new_offspring(self):
-        graded = self.__graded_by_fitness()
-        k_best = int(len(graded) * 0.1)
-        offspring = select_k_best(candidates=graded, k=k_best)
-        childs_total = int(len(graded) * 0.9)
+        selected_amount = int(len(self.pop) * 0.1)
+        offspring = select_by_tournament(candidates=self.pop, k=selected_amount, tournament_size=10)
+
+        # Add some diversity
+        random_chosen = np.random.choice(self.pop, int(len(self.pop) * 0.1))
+        offspring.extend(random_chosen)
+
+        childs_total = int(len(self.pop) * 0.8)
         childs_amount = 0
 
         while childs_amount < childs_total:
@@ -90,11 +95,6 @@ class MatrixIndivid:
     def __init__(self, genotype):
         self.genotype = genotype
         self.fitness_value = None
-
-
-def select_k_best(candidates, k):
-    assert k <= len(candidates)
-    return candidates[:k]
 
 
 def mutated_individ(source_individ):
