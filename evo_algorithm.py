@@ -1,4 +1,5 @@
 import os
+from operator import attrgetter
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -33,7 +34,7 @@ class BasicEvoStrategy:
             self.__assign_fitness_values()
             self.__history_callback()
 
-            top = self.__graded_by_fitness()[0]
+            top = self.graded_by_fitness()[0]
             print(f'Best candidate with fitness: {top.fitness_value}')
             new_pop = self.__new_offspring()
 
@@ -54,9 +55,10 @@ class BasicEvoStrategy:
         for individ in self.pop:
             individ.fitness_value = self.fitness(source_matrix=self.source_matrix, svd=individ.genotype)
 
-    def __graded_by_fitness(self):
-        pop = np.copy(self.pop)
-        return sorted(pop, key=lambda p: p.fitness_value)
+    def graded_by_fitness(self):
+        self.__assign_fitness_values()
+        graded = sorted(self.pop, key=attrgetter('fitness_value'))
+        return graded
 
     def __new_offspring(self):
         selected_amount = int(len(self.pop) * 0.1)
@@ -88,7 +90,11 @@ class BasicEvoStrategy:
     # TODO: implement callbacks logic
     def __history_callback(self):
         fitness = [ind.fitness_value for ind in self.pop]
-        self.history.new_generation(avg_fitness=np.average(fitness), min_fitness_in_pop=np.min(fitness))
+        best_candidate = self.graded_by_fitness()[0]
+        u_norm, s_norm, vh_norm = svd_frob_norm(best_candidate=best_candidate.genotype, matrix=self.source_matrix)
+
+        self.history.new_generation(avg_fitness=np.average(fitness), min_fitness_in_pop=np.min(fitness),
+                                    u_norm=u_norm, s_norm=s_norm, vh_norm=vh_norm)
 
 
 class MatrixIndivid:
@@ -116,11 +122,11 @@ class EvoHistory:
         self.last_run_idx += 1
         self.__history[self.last_run_idx] = []
 
-    def new_generation(self, avg_fitness, min_fitness_in_pop):
+    def new_generation(self, avg_fitness, min_fitness_in_pop, u_norm, s_norm, vh_norm):
         if self.last_run_idx < 0:
             self.init_new_run()
         self.__history[self.last_run_idx].append(
-            [avg_fitness, min_fitness_in_pop]
+            [avg_fitness, min_fitness_in_pop, u_norm, s_norm, vh_norm]
         )
 
     # TODO: refactor this
@@ -130,7 +136,14 @@ class EvoHistory:
 
         avg_fitness_by_gens = []
 
-        value_idx = 1 if values_to_plot == 'min' else 0
+        values_by_idx = {
+            'avg': 0,
+            'min': 1,
+            'u_norm': 2,
+            's_norm': 3,
+            'vh_norm': 4
+        }
+        value_idx = values_by_idx[values_to_plot]
 
         for gen in gens:
             avg_loss_by_gen = []
@@ -198,3 +211,11 @@ def joint_crossover(parent_first, parent_second):
     child_second = MatrixIndivid(genotype=(u_second, s_second, vh_second))
 
     return child_first, child_second
+
+
+def svd_frob_norm(best_candidate, matrix):
+    u_base, s_base, vh_base = np.linalg.svd(matrix, full_matrices=True)
+
+    u, s, vh = best_candidate
+
+    return np.linalg.norm(u - u_base), np.linalg.norm(s - s_base), np.linalg.norm(vh - vh_base)
