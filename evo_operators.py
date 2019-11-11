@@ -22,7 +22,7 @@ def single_point_crossover(parent_first, parent_second, type='horizontal'):
 
     child_first, child_second = np.zeros(shape=size), np.zeros(shape=size)
 
-    if type is 'horizontal':
+    if type == 'horizontal':
         cross_point = np.random.randint(0, size[0] - 1)
 
         child_first[:cross_point] = parent_first[:cross_point]
@@ -30,9 +30,8 @@ def single_point_crossover(parent_first, parent_second, type='horizontal'):
 
         child_second[:cross_point] = parent_second[:cross_point]
         child_second[cross_point:] = parent_first[cross_point:]
-    elif type is 'vertical':
+    elif type == 'vertical':
         cross_point = np.random.randint(0, size[1] - 1)
-
         child_first[:, :cross_point] = parent_first[:, :cross_point]
         child_first[:, cross_point:] = parent_second[:, cross_point:]
 
