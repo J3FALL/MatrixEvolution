@@ -34,7 +34,7 @@ if __name__ == '__main__':
     evo_operators = {'new_individ': new_individ_random_svd,
                      'fitness': fitness_frob_norm}
     meta_params = {'pop_size': 200,
-                   'generations': 200}
+                   'generations': 300}
 
     evo_history = EvoHistory()
 
@@ -43,7 +43,9 @@ if __name__ == '__main__':
         evo_strategy = BasicEvoStrategy(evo_operators=evo_operators, meta_params=meta_params,
                                         history=evo_history, source_matrix=source_matrix)
         evo_strategy.run()
-    # best_solution = evo_strategy.graded_by_fitness()[0]
-    # compare_results(matrix=source_matrix, evo_results=best_solution.genotype)
-
-    evo_history.loss_history_boxplots(values_to_plot='vh_norm', save_to_file=False, gens_ticks=10)
+        best_solution = evo_strategy.graded_by_fitness()[0]
+        # compare_results(matrix=source_matrix, evo_results=best_solution.genotype)
+        print(best_solution.genotype[1])
+        _, s, _ = np.linalg.svd(source_matrix)
+        print(s)
+    evo_history.loss_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=15)

@@ -4,7 +4,8 @@ from evo_operators import (
     fitness_frob_norm,
     random_matrix,
     single_point_crossover,
-    mutation_gauss
+    mutation_gauss,
+    two_point_crossover
 )
 
 
@@ -56,3 +57,14 @@ def test_mutation_gauss_correct():
     resulted = mutation_gauss(candidate=candidate, mu=mu, sigma=sigma, prob_global=prob_global)
 
     assert source_shape == resulted.shape
+
+
+def test_two_point_crossover_correct():
+    parent_first, parent_second = np.zeros((5, 5)), np.ones((5, 5))
+
+    child_first, child_second = two_point_crossover(parent_first, parent_second, 'horizontal')
+
+    print(f'Child first: {child_first}')
+    print(f'Child second: {child_second}')
+
+    assert parent_first.shape == child_first.shape == child_second.shape
