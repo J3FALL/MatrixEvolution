@@ -4,6 +4,7 @@ from operator import attrgetter
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
+from pysampling.sample import sample
 
 from evo_operators import (
     mutation_gauss,
@@ -46,15 +47,20 @@ class BasicEvoStrategy:
             mutations_amount = int(len(offspring) * 0.2)
             for _ in range(mutations_amount):
                 idx = np.random.randint(len(offspring) - 1)
-                offspring[idx] = mutated_individ(offspring[idx])
+                offspring[idx] = mutated_individ_only_s(offspring[idx])
             self.pop = offspring
             self.cur_gen += 1
 
     def __init_population(self):
+        self.pop = initial_population_from_lhs_only_s(samples_amount=self.pop_size, vector_size=self.matrix_size[0],
+                                                      values_range=10.0, source_matrix=self.source_matrix)
+        self.cur_gen = 0
+
+    def __init_basically(self):
+        # TODO: init_population as external function
         for _ in range(self.pop_size):
             individ = MatrixIndivid(genotype=self.new_individ(self.source_matrix))
             self.pop.append(individ)
-        self.cur_gen = 0
 
     def __assign_fitness_values(self):
         for individ in self.pop:
@@ -67,16 +73,16 @@ class BasicEvoStrategy:
 
     def __new_offspring(self):
         offspring = []
-        selected_amount = int(len(self.pop) * 0.1)
+        selected_amount = int(len(self.pop) * 0.2)
         selected_parents = select_by_tournament(candidates=self.pop, k=selected_amount, tournament_size=20)
         offspring.extend(selected_parents)
 
-        childs_total = int(len(self.pop) * 0.8)
+        childs_total = int(len(self.pop) * 0.7)
         childs_amount = 0
 
         while childs_amount < childs_total:
             parent_first, parent_second = np.random.choice(selected_parents), np.random.choice(selected_parents)
-            child_first, child_second = separate_crossover(parent_first, parent_second)
+            child_first, child_second = separate_crossover_only_s(parent_first, parent_second)
             # for val in ['u', 's', 'vh']:
             #     first_val, second_val = getattr(parent_first, val), getattr(parent_second, val)
             #
@@ -84,17 +90,15 @@ class BasicEvoStrategy:
 
             offspring.extend([child_first, child_second])
             childs_amount += 2
-
-        random_chosen = self.__diversity(rate=0.1, fraction_worst=0.3)
+        random_chosen = self.__diversity(rate=0.1, fraction_worst=0.5)
         offspring.extend(random_chosen)
-
         return offspring
 
     def __survived(self, survive_rate=0.1):
         survived = select_k_best(candidates=self.pop, k=int(len(self.pop) * survive_rate))
         return survived
 
-    def __diversity(self, rate=0.1, fraction_worst=0.3):
+    def __diversity(self, rate=0.1, fraction_worst=0.5):
         k_worst = int((1.0 - fraction_worst) * len(self.pop))
         worst_candidates = self.graded_by_fitness()[k_worst:]
         random_chosen = np.random.choice(worst_candidates, int(len(self.pop) * rate))
@@ -115,6 +119,18 @@ class BasicEvoStrategy:
                                     u_norm=u_norm, s_norm=s_norm, vh_norm=vh_norm)
 
 
+def initial_population_from_lhs_only_s(samples_amount, vector_size, values_range, source_matrix):
+    print('Sampling from LHS...')
+    s_samples = values_range * sample("lhs", samples_amount, vector_size) - values_range / 2.0
+    print('Sampling: done')
+    u_base, _, vh_base = np.linalg.svd(source_matrix, full_matrices=True)
+
+    pop = []
+    for idx, s in enumerate(s_samples):
+        pop.append(MatrixIndivid(genotype=(u_base, s, vh_base)))
+    return pop
+
+
 class MatrixIndivid:
     def __init__(self, genotype):
         self.genotype = genotype
@@ -122,9 +138,9 @@ class MatrixIndivid:
 
 
 def mutated_individ(source_individ):
-    u_mutated = mutation_gauss(candidate=source_individ.genotype[0], mu=0, sigma=0.1, prob_global=0.05)
-    s_mutated = mutation_gauss(candidate=source_individ.genotype[1], mu=0, sigma=0.1, prob_global=0.05)
-    vh_mutated = mutation_gauss(candidate=source_individ.genotype[2], mu=0, sigma=0.1, prob_global=0.05)
+    u_mutated = mutation_gauss(candidate=source_individ.genotype[0], mu=0, sigma=0.2, prob_global=0.05)
+    s_mutated = mutation_gauss(candidate=source_individ.genotype[1], mu=0, sigma=0.2, prob_global=0.05)
+    vh_mutated = mutation_gauss(candidate=source_individ.genotype[2], mu=0, sigma=0.2, prob_global=0.05)
 
     resulted = MatrixIndivid(genotype=(u_mutated, s_mutated, vh_mutated))
 
@@ -136,7 +152,7 @@ def mutated_individ_only_s(source_individ):
     u_resulted = np.copy(u)
     vh_resulted = np.copy(vh)
 
-    s_mutated = mutation_gauss(candidate=s, mu=0, sigma=0.5, prob_global=0.2)
+    s_mutated = mutation_gauss(candidate=s, mu=0, sigma=1.0, prob_global=0.25)
 
     resulted = MatrixIndivid(genotype=(u_resulted, s_mutated, vh_resulted))
 
@@ -223,9 +239,9 @@ def separate_crossover(parent_first, parent_second):
 def separate_crossover_only_s(parent_first, parent_second):
     u_first, u_second = parent_first.genotype[0], parent_second.genotype[0],
 
-    s_first, s_second = single_point_crossover(parent_first=parent_first.genotype[1],
-                                               parent_second=parent_second.genotype[1],
-                                               type='horizontal')
+    s_first, s_second = k_point_crossover(parent_first=parent_first.genotype[1],
+                                          parent_second=parent_second.genotype[1],
+                                          type='horizontal', k=4)
     vh_first, vh_second = parent_first.genotype[2], parent_second.genotype[2]
 
     child_first = MatrixIndivid(genotype=(u_first, s_first, vh_first))

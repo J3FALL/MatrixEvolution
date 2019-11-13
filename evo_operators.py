@@ -11,20 +11,29 @@ def fitness_frob_norm(source_matrix, svd):
     return frob_norm
 
 
+def fitness_s_component_diff(source_matrix, svd):
+    _, s_target, _ = svd
+    _, s_base, _ = np.linalg.svd(source_matrix, full_matrices=True)
+
+    # weights = sorted([weight for weight in range(1, s_base.shape[0] + 1)], reverse=True)
+    # diff = np.linalg.norm(np.sort(s_target) - np.sort(s_base), ord=2)
+    diff = np.sum(np.abs(np.sort(s_target) - np.sort(s_base)))
+    return diff
+
+
 def new_individ_random_svd(source_matrix):
     size = source_matrix.shape
     u = random_matrix(size)
-    s = np.random.rand(size[0], )
+    s = 10.0 * np.random.rand(size[0], ) - 5.0
     vh = random_matrix(size)
-
     return u, s, vh
 
 
 def new_individ_random_s_only(source_matrix):
     u_base, s_base, vh_base = np.linalg.svd(source_matrix, full_matrices=True)
 
-    abs_range = 10
-    s = abs_range * np.random.random(source_matrix.shape[0], ) - abs_range
+    abs_range = 10.0
+    s = abs_range * np.random.random(source_matrix.shape[0], ) - abs_range / 2.0
 
     return u_base, s, vh_base
 
@@ -83,7 +92,7 @@ def two_point_crossover(parent_first, parent_second, type='horizontal'):
 
 def k_point_crossover(parent_first, parent_second, type='horizontal', k=3):
     size = parent_first.shape
-    child_first, child_second = np.copy(parent_first), np.copy(parent_second)
+    child_first, child_second = np.zeros(size), np.zeros(size)
 
     if type == 'horizontal':
         points = __random_cross_points(max_size=size[0], k=k)

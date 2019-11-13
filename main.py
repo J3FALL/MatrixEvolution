@@ -5,8 +5,8 @@ from evo_algorithm import (
     EvoHistory
 )
 from evo_operators import (
-    fitness_frob_norm,
-    new_individ_random_svd
+    new_individ_random_s_only,
+    fitness_s_component_diff
 )
 
 
@@ -31,10 +31,10 @@ def compare_results(matrix, evo_results):
 
 if __name__ == '__main__':
     source_matrix = np.random.rand(10, 10)
-    evo_operators = {'new_individ': new_individ_random_svd,
-                     'fitness': fitness_frob_norm}
+    evo_operators = {'new_individ': new_individ_random_s_only,
+                     'fitness': fitness_s_component_diff}
     meta_params = {'pop_size': 500,
-                   'generations': 1000}
+                   'generations': 500}
 
     evo_history = EvoHistory()
 
@@ -44,7 +44,9 @@ if __name__ == '__main__':
                                         history=evo_history, source_matrix=source_matrix)
         evo_strategy.run()
         best_solution = evo_strategy.graded_by_fitness()[0]
-        print(best_solution.genotype[1])
+        singular_values = sorted(best_solution.genotype[1], reverse=True)
+        print(singular_values)
         _, s, _ = np.linalg.svd(source_matrix)
         print(s)
-    evo_history.loss_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=50)
+        print(np.abs(singular_values - s))
+    evo_history.loss_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=25)
