@@ -1,3 +1,4 @@
+import random
 from operator import attrgetter
 
 import numpy as np
@@ -7,14 +8,13 @@ def fitness_frob_norm(source_matrix, svd):
     u, s, vh = svd
     target = __matrix_from_svd(u=u, s=s, vh=vh)
     frob_norm = np.linalg.norm(source_matrix - target)
-    # second_ord_norm = np.linalg.norm(source_matrix - target, ord=2)
     return frob_norm
 
 
 def new_individ_random_svd(source_matrix):
     size = source_matrix.shape
     u = random_matrix(size)
-    s = 2 * np.random.rand(size[0], ) - 2
+    s = np.random.rand(size[0], )
     vh = random_matrix(size)
 
     return u, s, vh
@@ -81,6 +81,62 @@ def two_point_crossover(parent_first, parent_second, type='horizontal'):
     return child_first, child_second
 
 
+def k_point_crossover(parent_first, parent_second, type='horizontal', k=3):
+    size = parent_first.shape
+    child_first, child_second = np.copy(parent_first), np.copy(parent_second)
+
+    if type == 'horizontal':
+        points = __random_cross_points(max_size=size[0], k=k)
+        parents = [parent_first, parent_second]
+        parent_idx = 0
+
+        for point_idx in range(1, len(points)):
+            point_from, point_to = points[point_idx - 1], points[point_idx]
+
+            child_first[point_from: point_to] = parents[parent_idx][point_from:point_to]
+            child_second[point_from:point_to] = parents[(parent_idx + 1) % 2][point_from:point_to]
+
+            parent_idx = (parent_idx + 1) % 2
+    elif type == 'vertical':
+        points = __random_cross_points(max_size=size[1], k=k)
+
+        parents = [parent_first, parent_second]
+        parent_idx = 0
+
+        for point_idx in range(1, len(points)):
+            point_from, point_to = points[point_idx - 1], points[point_idx]
+
+            child_first[:, point_from: point_to] = parents[parent_idx][:, point_from:point_to]
+            child_second[:, point_from:point_to] = parents[(parent_idx + 1) % 2][:, point_from:point_to]
+
+            parent_idx = (parent_idx + 1) % 2
+
+    return child_first, child_second
+
+
+def __random_cross_points(max_size, k=3):
+    points = random.sample(range(0, max_size), k)
+    if 0 not in points:
+        points.append(0)
+    if max_size not in points:
+        points.append(max_size)
+    points = sorted(points)
+
+    return points
+
+
+def arithmetic_crossover(parent_first, parent_second, **kwargs):
+    if 'alpha' in kwargs:
+        alpha = kwargs['alpha']
+    else:
+        alpha = np.random.random()
+
+    child_first = alpha * parent_first + (1.0 - alpha) * parent_second
+    child_second = (1.0 - alpha) * parent_first + alpha * parent_second
+
+    return child_first, child_second
+
+
 def mutation_gauss(candidate, mu, sigma, prob_global):
     source_shape = candidate.shape
     resulted = np.ndarray.flatten(candidate)
@@ -123,7 +179,7 @@ def select_by_rank(candidates, k):
     return selected[:k]
 
 
-def random_matrix(matrix_size, range_value=2):
+def random_matrix(matrix_size, range_value=1):
     size_a, size_b = matrix_size
     matrix = range_value * np.random.rand(size_a, size_b) - range_value
 
