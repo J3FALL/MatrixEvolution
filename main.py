@@ -9,11 +9,15 @@ from evo_algorithm import (
 from evo_operators import (
     fitness_s_component_diff,
     select_by_tournament,
-    mutated_individ_only_s,
     mutation_gauss,
     k_point_crossover,
     separate_crossover_only_s,
-    initial_population_from_lhs_only_s
+    initial_population_from_lhs_only_s,
+    initial_population_only_u_random,
+    fitness_frob_norm_only_u,
+    mutated_individ_only_u,
+    separate_crossover_only_u,
+    mutated_individ_only_s
 )
 
 
@@ -36,7 +40,7 @@ def compare_results(matrix, evo_results):
     print(np.sqrt(np.power(vh - vh_base, 2)))
 
 
-if __name__ == '__main__':
+def evo_only_s_configurations():
     source_matrix = np.random.rand(10, 10)
 
     mutation = partial(mutation_gauss, mu=0, sigma=1.0, prob_global=0.25)
@@ -53,6 +57,27 @@ if __name__ == '__main__':
     meta_params = {'pop_size': 500, 'generations': 500, 'bound_value': 10.0,
                    'selection_rate': 0.2, 'crossover_rate': 0.7, 'random_selection_rate': 0.1, 'mutation_rate': 0.2}
 
+    return source_matrix, evo_operators, meta_params
+
+
+def evolution_only_u_component():
+    source_matrix = np.random.rand(10, 10)
+    mutation = partial(mutation_gauss, mu=0, sigma=0.4, prob_global=0.1)
+    crossover = partial(k_point_crossover, type='random', k=4)
+    init_population = partial(initial_population_only_u_random, source_matrix=source_matrix, bound_value=15.0)
+    evo_operators = {'fitness': fitness_frob_norm_only_u,
+                     'parent_selection': partial(select_by_tournament, tournament_size=20),
+                     'mutation': partial(mutated_individ_only_u, mutate=mutation),
+                     'crossover': partial(separate_crossover_only_u, crossover=crossover),
+                     'initial_population': init_population}
+    meta_params = {'pop_size': 500, 'generations': 500, 'bound_value': 10.0,
+                   'selection_rate': 0.2, 'crossover_rate': 0.6, 'random_selection_rate': 0.2, 'mutation_rate': 0.3}
+
+    return source_matrix, evo_operators, meta_params
+
+
+def run_evolution():
+    source_matrix, evo_operators, meta_params = evolution_only_u_component()
     evo_history = EvoHistory()
 
     for run_id in range(5):
@@ -61,9 +86,13 @@ if __name__ == '__main__':
                                         history=evo_history, source_matrix=source_matrix)
         evo_strategy.run()
         best_solution = evo_strategy.graded_by_fitness()[0]
-        singular_values = sorted(best_solution.genotype[1], reverse=True)
-        print(singular_values)
-        _, s, _ = np.linalg.svd(source_matrix)
-        print(s)
-        print(np.abs(singular_values - s))
+        u_best = best_solution.genotype[0]
+        print(u_best)
+        u_baseline, _, _ = np.linalg.svd(source_matrix)
+        print(u_baseline)
+        print(np.abs(u_best - u_baseline))
     evo_history.loss_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=25)
+
+
+if __name__ == '__main__':
+    run_evolution()

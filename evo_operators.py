@@ -22,6 +22,12 @@ def fitness_s_component_diff(source_matrix, svd):
     return diff
 
 
+def fitness_frob_norm_only_u(source_matrix, svd):
+    u_base, _, _ = np.linalg.svd(source_matrix, full_matrices=True)
+    u_target, _, _ = svd
+    return np.linalg.norm(u_target - u_base)
+
+
 def new_individ_random_svd(source_matrix, bound_value=10.0):
     size = source_matrix.shape
     u = random_matrix(size, bound_value=bound_value)
@@ -59,6 +65,18 @@ def initial_population_from_lhs_only_s(samples_amount, vector_size, values_range
     return pop
 
 
+def initial_population_only_u_random(pop_size, source_matrix, bound_value=10.0):
+    _, s_base, vh_base = np.linalg.svd(source_matrix, full_matrices=True)
+    size = source_matrix.shape
+
+    pop = []
+    for _ in range(pop_size):
+        u = random_matrix(size, bound_value=bound_value)
+        pop.append(MatrixIndivid(genotype=(u, s_base, vh_base)))
+
+    return pop
+
+
 def mutated_individ_only_s(source_individ: MatrixIndivid, mutate):
     u, s, vh = source_individ.genotype
     u_resulted = np.copy(u)
@@ -70,11 +88,35 @@ def mutated_individ_only_s(source_individ: MatrixIndivid, mutate):
     return resulted
 
 
+def mutated_individ_only_u(source_individ: MatrixIndivid, mutate):
+    u, s, vh = source_individ.genotype
+    s_resulted = np.copy(s)
+    vh_resulted = np.copy(vh)
+
+    u_mutated = mutate(candidate=u)
+    resulted = MatrixIndivid(genotype=(u_mutated, s_resulted, vh_resulted))
+
+    return resulted
+
+
 def separate_crossover_only_s(parent_first: MatrixIndivid, parent_second: MatrixIndivid, crossover):
     u_first, u_second = parent_first.genotype[0], parent_second.genotype[0],
 
     s_first, s_second = crossover(parent_first=parent_first.genotype[1],
                                   parent_second=parent_second.genotype[1])
+
+    vh_first, vh_second = parent_first.genotype[2], parent_second.genotype[2]
+
+    child_first = MatrixIndivid(genotype=(u_first, s_first, vh_first))
+    child_second = MatrixIndivid(genotype=(u_second, s_second, vh_second))
+
+    return child_first, child_second
+
+
+def separate_crossover_only_u(parent_first: MatrixIndivid, parent_second: MatrixIndivid, crossover):
+    u_first, u_second = crossover(parent_first.genotype[0], parent_second.genotype[0])
+
+    s_first, s_second = parent_first.genotype[1], parent_second.genotype[1]
 
     vh_first, vh_second = parent_first.genotype[2], parent_second.genotype[2]
 
@@ -149,6 +191,9 @@ def two_point_crossover(parent_first, parent_second, type='horizontal'):
 def k_point_crossover(parent_first, parent_second, type='horizontal', k=3):
     size = parent_first.shape
     child_first, child_second = np.zeros(size), np.zeros(size)
+
+    if type == 'random':
+        type = np.random.choice(['horizontal', 'vertical'])
 
     if type == 'horizontal':
         points = __random_cross_points(max_size=size[0], k=k)

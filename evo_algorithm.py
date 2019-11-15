@@ -164,6 +164,10 @@ class EvoHistory:
         plt.ylabel('Fitness')
         plt.xlabel('Generation, #')
 
+        lowest_value = np.min(avg_fitness_by_gens)
+        plt.plot([], [], ' ', label=f'Lowest value in history: {lowest_value}')
+        plt.legend()
+
         if save_to_file:
             plt.savefig(os.path.join(dir, 'loss_history_boxplots.png'))
         else:
