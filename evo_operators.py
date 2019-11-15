@@ -2,6 +2,9 @@ import random
 from operator import attrgetter
 
 import numpy as np
+from pysampling.sample import sample
+
+from matrix import MatrixIndivid
 
 
 def fitness_frob_norm(source_matrix, svd):
@@ -15,17 +18,15 @@ def fitness_s_component_diff(source_matrix, svd):
     _, s_target, _ = svd
     _, s_base, _ = np.linalg.svd(source_matrix, full_matrices=True)
 
-    # weights = sorted([weight for weight in range(1, s_base.shape[0] + 1)], reverse=True)
-    # diff = np.linalg.norm(np.sort(s_target) - np.sort(s_base), ord=2)
     diff = np.sum(np.abs(np.sort(s_target) - np.sort(s_base)))
     return diff
 
 
-def new_individ_random_svd(source_matrix):
+def new_individ_random_svd(source_matrix, bound_value=10.0):
     size = source_matrix.shape
-    u = random_matrix(size)
-    s = 10.0 * np.random.rand(size[0], ) - 5.0
-    vh = random_matrix(size)
+    u = random_matrix(size, bound_value=bound_value)
+    s = bound_value * np.random.rand(size[0], ) - bound_value / 2.0
+    vh = random_matrix(size, bound_value=bound_value)
     return u, s, vh
 
 
@@ -36,6 +37,53 @@ def new_individ_random_s_only(source_matrix):
     s = abs_range * np.random.random(source_matrix.shape[0], ) - abs_range / 2.0
 
     return u_base, s, vh_base
+
+
+def initial_population_from_lhs_only_s(samples_amount, vector_size, values_range, source_matrix):
+    print('Sampling from LHS...')
+    s_samples = values_range * sample("lhs", samples_amount, vector_size) - values_range / 2.0
+    print('Sampling: done')
+    u_base, _, vh_base = np.linalg.svd(source_matrix, full_matrices=True)
+
+    pop = []
+    for idx, s in enumerate(s_samples):
+        pop.append(MatrixIndivid(genotype=(u_base, s, vh_base)))
+    return pop
+
+
+def mutated_individ_only_s(source_individ: MatrixIndivid, mutate):
+    u, s, vh = source_individ.genotype
+    u_resulted = np.copy(u)
+    vh_resulted = np.copy(vh)
+
+    s_mutated = mutate(candidate=s)
+    resulted = MatrixIndivid(genotype=(u_resulted, s_mutated, vh_resulted))
+
+    return resulted
+
+
+def separate_crossover_only_s(parent_first: MatrixIndivid, parent_second: MatrixIndivid, crossover):
+    u_first, u_second = parent_first.genotype[0], parent_second.genotype[0],
+
+    s_first, s_second = crossover(parent_first=parent_first.genotype[1],
+                                  parent_second=parent_second.genotype[1])
+
+    vh_first, vh_second = parent_first.genotype[2], parent_second.genotype[2]
+
+    child_first = MatrixIndivid(genotype=(u_first, s_first, vh_first))
+    child_second = MatrixIndivid(genotype=(u_second, s_second, vh_second))
+
+    return child_first, child_second
+
+
+def mutated_individ(source_individ):
+    u_mutated = mutation_gauss(candidate=source_individ.genotype[0], mu=0, sigma=0.2, prob_global=0.05)
+    s_mutated = mutation_gauss(candidate=source_individ.genotype[1], mu=0, sigma=0.2, prob_global=0.05)
+    vh_mutated = mutation_gauss(candidate=source_individ.genotype[2], mu=0, sigma=0.2, prob_global=0.05)
+
+    resulted = MatrixIndivid(genotype=(u_mutated, s_mutated, vh_mutated))
+
+    return resulted
 
 
 def single_point_crossover(parent_first, parent_second, type='horizontal', **kwargs):
@@ -146,6 +194,46 @@ def arithmetic_crossover(parent_first, parent_second, **kwargs):
     return child_first, child_second
 
 
+def joint_crossover(parent_first, parent_second):
+    # TODO: refactor this
+    crossover_type = np.random.choice(['horizontal', 'vertical'])
+
+    min_size = np.min(parent_first.genotype[0].shape)
+    cross_point = np.random.randint(0, min_size - 1)
+    u_first, u_second = single_point_crossover(parent_first=parent_first.genotype[0],
+                                               parent_second=parent_second.genotype[0],
+                                               type=crossover_type, cross_point=cross_point)
+    s_first, s_second = single_point_crossover(parent_first=parent_first.genotype[1],
+                                               parent_second=parent_second.genotype[1],
+                                               type='horizontal', cross_point=cross_point)
+    vh_first, vh_second = single_point_crossover(parent_first=parent_first.genotype[2],
+                                                 parent_second=parent_second.genotype[2],
+                                                 type=crossover_type, cross_point=cross_point)
+
+    child_first = MatrixIndivid(genotype=(u_first, s_first, vh_first))
+    child_second = MatrixIndivid(genotype=(u_second, s_second, vh_second))
+
+    return child_first, child_second
+
+
+def separate_crossover(parent_first, parent_second):
+    crossover_type = np.random.choice(['horizontal', 'vertical'])
+    u_first, u_second = k_point_crossover(parent_first=parent_first.genotype[0],
+                                          parent_second=parent_second.genotype[0],
+                                          type=crossover_type, k=4)
+    s_first, s_second = k_point_crossover(parent_first=parent_first.genotype[1],
+                                          parent_second=parent_second.genotype[1],
+                                          type='horizontal', k=4)
+    vh_first, vh_second = k_point_crossover(parent_first=parent_first.genotype[2],
+                                            parent_second=parent_second.genotype[2],
+                                            type=crossover_type, k=4)
+
+    child_first = MatrixIndivid(genotype=(u_first, s_first, vh_first))
+    child_second = MatrixIndivid(genotype=(u_second, s_second, vh_second))
+
+    return child_first, child_second
+
+
 def mutation_gauss(candidate, mu, sigma, prob_global):
     source_shape = candidate.shape
     resulted = np.ndarray.flatten(candidate)
@@ -188,9 +276,9 @@ def select_by_rank(candidates, k):
     return selected[:k]
 
 
-def random_matrix(matrix_size, range_value=1):
+def random_matrix(matrix_size, bound_value=1.0):
     size_a, size_b = matrix_size
-    matrix = range_value * np.random.rand(size_a, size_b) - range_value
+    matrix = bound_value * np.random.rand(size_a, size_b) - bound_value / 2.0
 
     return matrix
 

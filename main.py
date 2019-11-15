@@ -1,3 +1,5 @@
+from functools import partial
+
 import numpy as np
 
 from evo_algorithm import (
@@ -6,7 +8,12 @@ from evo_algorithm import (
 )
 from evo_operators import (
     new_individ_random_s_only,
-    fitness_s_component_diff
+    fitness_s_component_diff,
+    select_by_tournament,
+    mutated_individ_only_s,
+    mutation_gauss,
+    k_point_crossover,
+    separate_crossover_only_s
 )
 
 
@@ -31,10 +38,16 @@ def compare_results(matrix, evo_results):
 
 if __name__ == '__main__':
     source_matrix = np.random.rand(10, 10)
+
+    mutation = partial(mutation_gauss, mu=0, sigma=1.0, prob_global=0.25)
+    crossover = partial(k_point_crossover, type='horizontal', k=4)
     evo_operators = {'new_individ': new_individ_random_s_only,
-                     'fitness': fitness_s_component_diff}
-    meta_params = {'pop_size': 500,
-                   'generations': 500}
+                     'fitness': fitness_s_component_diff,
+                     'parent_selection': partial(select_by_tournament, tournament_size=20),
+                     'mutation': partial(mutated_individ_only_s, mutate=mutation),
+                     'crossover': partial(separate_crossover_only_s, crossover=crossover)}
+    meta_params = {'pop_size': 500, 'generations': 500, 'bound_value': 10.0,
+                   'selection_rate': 0.2, 'crossover_rate': 0.7, 'random_selection_rate': 0.1, 'mutation_rate': 0.2}
 
     evo_history = EvoHistory()
 
