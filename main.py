@@ -7,13 +7,13 @@ from evo_algorithm import (
     EvoHistory
 )
 from evo_operators import (
-    new_individ_random_s_only,
     fitness_s_component_diff,
     select_by_tournament,
     mutated_individ_only_s,
     mutation_gauss,
     k_point_crossover,
-    separate_crossover_only_s
+    separate_crossover_only_s,
+    initial_population_from_lhs_only_s
 )
 
 
@@ -41,11 +41,15 @@ if __name__ == '__main__':
 
     mutation = partial(mutation_gauss, mu=0, sigma=1.0, prob_global=0.25)
     crossover = partial(k_point_crossover, type='horizontal', k=4)
-    evo_operators = {'new_individ': new_individ_random_s_only,
-                     'fitness': fitness_s_component_diff,
+    init_population = partial(initial_population_from_lhs_only_s, vector_size=source_matrix.shape[0],
+                              values_range=15.0, source_matrix=source_matrix)
+
+    evo_operators = {'fitness': fitness_s_component_diff,
                      'parent_selection': partial(select_by_tournament, tournament_size=20),
                      'mutation': partial(mutated_individ_only_s, mutate=mutation),
-                     'crossover': partial(separate_crossover_only_s, crossover=crossover)}
+                     'crossover': partial(separate_crossover_only_s, crossover=crossover),
+                     'initial_population': init_population}
+
     meta_params = {'pop_size': 500, 'generations': 500, 'bound_value': 10.0,
                    'selection_rate': 0.2, 'crossover_rate': 0.7, 'random_selection_rate': 0.1, 'mutation_rate': 0.2}
 

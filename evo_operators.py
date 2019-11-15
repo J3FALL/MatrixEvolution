@@ -39,6 +39,14 @@ def new_individ_random_s_only(source_matrix):
     return u_base, s, vh_base
 
 
+def init_population_random(pop_size, source_matrix, bound_value=10.0):
+    pop = []
+    for _ in range(pop_size):
+        individ = MatrixIndivid(genotype=new_individ_random_svd(source_matrix, bound_value=bound_value))
+        pop.append(individ)
+    return pop
+
+
 def initial_population_from_lhs_only_s(samples_amount, vector_size, values_range, source_matrix):
     print('Sampling from LHS...')
     s_samples = values_range * sample("lhs", samples_amount, vector_size) - values_range / 2.0

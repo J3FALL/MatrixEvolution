@@ -7,20 +7,16 @@ import seaborn as sns
 
 from evo_operators import (
     select_k_best,
-    initial_population_from_lhs_only_s,
-)
-from matrix import (
-    MatrixIndivid
 )
 
 
 class BasicEvoStrategy:
     def __init__(self, evo_operators: dict, meta_params: dict, history, source_matrix):
-        self.new_individ = evo_operators['new_individ']
         self.fitness = evo_operators['fitness']
         self.select_parents = evo_operators['parent_selection']
         self.mutate = evo_operators['mutation']
         self.crossover = evo_operators['crossover']
+        self.initial_population = evo_operators['initial_population']
 
         self.meta_params = meta_params
         self.pop_size = meta_params['pop_size']
@@ -55,15 +51,8 @@ class BasicEvoStrategy:
             self.cur_gen += 1
 
     def __init_population(self):
-        self.pop = initial_population_from_lhs_only_s(samples_amount=self.pop_size, vector_size=self.matrix_size[0],
-                                                      values_range=15.0, source_matrix=self.source_matrix)
+        self.pop = self.initial_population(self.pop_size)
         self.cur_gen = 0
-
-    def __init_basically(self):
-        # TODO: init_population as external function
-        for _ in range(self.pop_size):
-            individ = MatrixIndivid(genotype=self.new_individ(self.source_matrix))
-            self.pop.append(individ)
 
     def __assign_fitness_values(self):
         for individ in self.pop:
