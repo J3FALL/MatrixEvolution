@@ -1,3 +1,5 @@
+from functools import partial
+
 import numpy as np
 
 from evo_algorithm import (
@@ -5,8 +7,13 @@ from evo_algorithm import (
     EvoHistory
 )
 from evo_operators import (
-    fitness_frob_norm,
-    new_individ_random_svd
+    fitness_s_component_diff,
+    select_by_tournament,
+    mutated_individ_only_s,
+    mutation_gauss,
+    k_point_crossover,
+    separate_crossover_only_s,
+    initial_population_from_lhs_only_s
 )
 
 
@@ -31,10 +38,20 @@ def compare_results(matrix, evo_results):
 
 if __name__ == '__main__':
     source_matrix = np.random.rand(10, 10)
-    evo_operators = {'new_individ': new_individ_random_svd,
-                     'fitness': fitness_frob_norm}
-    meta_params = {'pop_size': 200,
-                   'generations': 300}
+
+    mutation = partial(mutation_gauss, mu=0, sigma=1.0, prob_global=0.25)
+    crossover = partial(k_point_crossover, type='horizontal', k=4)
+    init_population = partial(initial_population_from_lhs_only_s, vector_size=source_matrix.shape[0],
+                              values_range=15.0, source_matrix=source_matrix)
+
+    evo_operators = {'fitness': fitness_s_component_diff,
+                     'parent_selection': partial(select_by_tournament, tournament_size=20),
+                     'mutation': partial(mutated_individ_only_s, mutate=mutation),
+                     'crossover': partial(separate_crossover_only_s, crossover=crossover),
+                     'initial_population': init_population}
+
+    meta_params = {'pop_size': 500, 'generations': 500, 'bound_value': 10.0,
+                   'selection_rate': 0.2, 'crossover_rate': 0.7, 'random_selection_rate': 0.1, 'mutation_rate': 0.2}
 
     evo_history = EvoHistory()
 
@@ -44,8 +61,9 @@ if __name__ == '__main__':
                                         history=evo_history, source_matrix=source_matrix)
         evo_strategy.run()
         best_solution = evo_strategy.graded_by_fitness()[0]
-        # compare_results(matrix=source_matrix, evo_results=best_solution.genotype)
-        print(best_solution.genotype[1])
+        singular_values = sorted(best_solution.genotype[1], reverse=True)
+        print(singular_values)
         _, s, _ = np.linalg.svd(source_matrix)
         print(s)
-    evo_history.loss_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=15)
+        print(np.abs(singular_values - s))
+    evo_history.loss_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=25)

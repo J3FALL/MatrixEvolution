@@ -5,7 +5,8 @@ from evo_operators import (
     random_matrix,
     single_point_crossover,
     mutation_gauss,
-    two_point_crossover
+    two_point_crossover,
+    k_point_crossover
 )
 
 
@@ -63,6 +64,16 @@ def test_two_point_crossover_correct():
     parent_first, parent_second = np.zeros((5, 5)), np.ones((5, 5))
 
     child_first, child_second = two_point_crossover(parent_first, parent_second, 'horizontal')
+
+    print(f'Child first: {child_first}')
+    print(f'Child second: {child_second}')
+
+    assert parent_first.shape == child_first.shape == child_second.shape
+
+
+def test_k_point_crossover_correct():
+    parent_first, parent_second = np.zeros((10, 10)), np.ones((10, 10))
+    child_first, child_second = k_point_crossover(parent_first, parent_second, 'horizontal', k=4)
 
     print(f'Child first: {child_first}')
     print(f'Child second: {child_second}')

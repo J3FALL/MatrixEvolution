@@ -6,17 +6,19 @@ import numpy as np
 import seaborn as sns
 
 from evo_operators import (
-    mutation_gauss,
-    single_point_crossover,
-    select_by_tournament
+    select_k_best,
 )
 
 
 class BasicEvoStrategy:
     def __init__(self, evo_operators: dict, meta_params: dict, history, source_matrix):
-
-        self.new_individ = evo_operators['new_individ']
         self.fitness = evo_operators['fitness']
+        self.select_parents = evo_operators['parent_selection']
+        self.mutate = evo_operators['mutation']
+        self.crossover = evo_operators['crossover']
+        self.initial_population = evo_operators['initial_population']
+
+        self.meta_params = meta_params
         self.pop_size = meta_params['pop_size']
         self.generations = meta_params['generations']
         self.pop = []
@@ -35,20 +37,21 @@ class BasicEvoStrategy:
             self.__history_callback()
 
             top = self.graded_by_fitness()[0]
+            avg = np.average([individ.fitness_value for individ in self.pop])
             print(f'Best candidate with fitness: {top.fitness_value}')
-            new_pop = self.__new_offspring()
+            print(f'Average fitness in population: {avg}')
 
-            mutations_amount = int(len(new_pop) * 0.1)
+            offspring = self.__new_offspring()
+
+            mutations_amount = int(len(offspring) * self.meta_params['mutation_rate'])
             for _ in range(mutations_amount):
-                idx = np.random.randint(len(new_pop) - 1)
-                new_pop[idx] = mutated_individ(new_pop[idx])
-            self.pop = new_pop
+                idx = np.random.randint(len(offspring) - 1)
+                offspring[idx] = self.mutate(offspring[idx])
+            self.pop = offspring
             self.cur_gen += 1
 
     def __init_population(self):
-        for _ in range(self.pop_size):
-            individ = MatrixIndivid(genotype=self.new_individ(self.source_matrix))
-            self.pop.append(individ)
+        self.pop = self.initial_population(self.pop_size)
         self.cur_gen = 0
 
     def __assign_fitness_values(self):
@@ -61,19 +64,17 @@ class BasicEvoStrategy:
         return graded
 
     def __new_offspring(self):
-        selected_amount = int(len(self.pop) * 0.1)
-        offspring = select_by_tournament(candidates=self.pop, k=selected_amount, tournament_size=20)
+        offspring = []
+        selected_amount = int(len(self.pop) * self.meta_params['selection_rate'])
+        selected_parents = self.select_parents(candidates=self.pop, k=selected_amount)
+        offspring.extend(selected_parents)
 
-        # Add some diversity
-        random_chosen = np.random.choice(self.pop, int(len(self.pop) * 0.1))
-        offspring.extend(random_chosen)
-
-        childs_total = int(len(self.pop) * 0.8)
+        childs_total = int(len(self.pop) * self.meta_params['crossover_rate'])
         childs_amount = 0
 
         while childs_amount < childs_total:
-            parent_first, parent_second = np.random.choice(offspring), np.random.choice(offspring)
-            child_first, child_second = separate_crossover(parent_first, parent_second)
+            parent_first, parent_second = np.random.choice(selected_parents), np.random.choice(selected_parents)
+            child_first, child_second = self.crossover(parent_first, parent_second)
             # for val in ['u', 's', 'vh']:
             #     first_val, second_val = getattr(parent_first, val), getattr(parent_second, val)
             #
@@ -81,8 +82,20 @@ class BasicEvoStrategy:
 
             offspring.extend([child_first, child_second])
             childs_amount += 2
-
+        random_chosen = self.__diversity(rate=self.meta_params['random_selection_rate'], fraction_worst=0.5)
+        offspring.extend(random_chosen)
         return offspring
+
+    def __survived(self, survive_rate=0.1):
+        survived = select_k_best(candidates=self.pop, k=int(len(self.pop) * survive_rate))
+        return survived
+
+    def __diversity(self, rate=0.1, fraction_worst=0.5):
+        k_worst = int((1.0 - fraction_worst) * len(self.pop))
+        worst_candidates = self.graded_by_fitness()[k_worst:]
+        random_chosen = np.random.choice(worst_candidates, int(len(self.pop) * rate))
+
+        return random_chosen
 
     def __stop_criteria(self):
         return self.cur_gen >= self.generations
@@ -96,34 +109,6 @@ class BasicEvoStrategy:
 
         self.history.new_generation(avg_fitness=np.average(fitness), min_fitness_in_pop=np.min(fitness),
                                     u_norm=u_norm, s_norm=s_norm, vh_norm=vh_norm)
-
-
-class MatrixIndivid:
-    def __init__(self, genotype):
-        self.genotype = genotype
-        self.fitness_value = None
-
-
-def mutated_individ(source_individ):
-    u_mutated = mutation_gauss(candidate=source_individ.genotype[0], mu=0, sigma=0.1, prob_global=0.1)
-    s_mutated = mutation_gauss(candidate=source_individ.genotype[1], mu=0, sigma=0.1, prob_global=0.1)
-    vh_mutated = mutation_gauss(candidate=source_individ.genotype[2], mu=0, sigma=0.1, prob_global=0.1)
-
-    resulted = MatrixIndivid(genotype=(u_mutated, s_mutated, vh_mutated))
-
-    return resulted
-
-
-def mutated_individ_only_s(source_individ):
-    u, s, vh = source_individ.genotype
-    u_resulted = np.copy(u)
-    vh_resulted = np.copy(vh)
-
-    s_mutated = mutation_gauss(candidate=s, mu=0, sigma=0.5, prob_global=0.2)
-
-    resulted = MatrixIndivid(genotype=(u_resulted, s_mutated, vh_resulted))
-
-    return resulted
 
 
 class EvoHistory:
@@ -183,60 +168,6 @@ class EvoHistory:
             plt.savefig(os.path.join(dir, 'loss_history_boxplots.png'))
         else:
             plt.show()
-
-
-def separate_crossover(parent_first, parent_second):
-    crossover_type = np.random.choice(['horizontal', 'vertical'])
-    u_first, u_second = single_point_crossover(parent_first=parent_first.genotype[0],
-                                               parent_second=parent_second.genotype[0],
-                                               type=crossover_type)
-    s_first, s_second = single_point_crossover(parent_first=parent_first.genotype[1],
-                                               parent_second=parent_second.genotype[1],
-                                               type='horizontal')
-    vh_first, vh_second = single_point_crossover(parent_first=parent_first.genotype[2],
-                                                 parent_second=parent_second.genotype[2],
-                                                 type=crossover_type)
-
-    child_first = MatrixIndivid(genotype=(u_first, s_first, vh_first))
-    child_second = MatrixIndivid(genotype=(u_second, s_second, vh_second))
-
-    return child_first, child_second
-
-
-def separate_crossover_only_s(parent_first, parent_second):
-    u_first, u_second = parent_first.genotype[0], parent_second.genotype[0],
-
-    s_first, s_second = single_point_crossover(parent_first=parent_first.genotype[1],
-                                               parent_second=parent_second.genotype[1],
-                                               type='horizontal')
-    vh_first, vh_second = parent_first.genotype[2], parent_second.genotype[2]
-
-    child_first = MatrixIndivid(genotype=(u_first, s_first, vh_first))
-    child_second = MatrixIndivid(genotype=(u_second, s_second, vh_second))
-
-    return child_first, child_second
-
-
-def joint_crossover(parent_first, parent_second):
-    # TODO: refactor this
-    crossover_type = np.random.choice(['horizontal', 'vertical'])
-
-    min_size = np.min(parent_first.genotype[0].shape)
-    cross_point = np.random.randint(0, min_size - 1)
-    u_first, u_second = single_point_crossover(parent_first=parent_first.genotype[0],
-                                               parent_second=parent_second.genotype[0],
-                                               type=crossover_type, cross_point=cross_point)
-    s_first, s_second = single_point_crossover(parent_first=parent_first.genotype[1],
-                                               parent_second=parent_second.genotype[1],
-                                               type='horizontal', cross_point=cross_point)
-    vh_first, vh_second = single_point_crossover(parent_first=parent_first.genotype[2],
-                                                 parent_second=parent_second.genotype[2],
-                                                 type=crossover_type, cross_point=cross_point)
-
-    child_first = MatrixIndivid(genotype=(u_first, s_first, vh_first))
-    child_second = MatrixIndivid(genotype=(u_second, s_second, vh_second))
-
-    return child_first, child_second
 
 
 def svd_frob_norm(best_candidate, matrix):
