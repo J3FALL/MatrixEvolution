@@ -77,6 +77,23 @@ def initial_population_only_u_random(pop_size, source_matrix, bound_value=10.0):
     return pop
 
 
+def initial_pop_flat_lhs_only_u(pop_size, source_matrix, bound_value):
+    source_shape = source_matrix.shape
+    vector_size = np.ndarray.flatten(source_matrix).shape[0]
+
+    _, s_base, vh_base = np.linalg.svd(source_matrix, full_matrices=True)
+
+    print('Sampling from LHS...')
+    u_samples = bound_value * sample("lhs", pop_size, vector_size) - bound_value / 2.0
+    print('Sampling: done')
+
+    pop = []
+    for idx, u in enumerate(u_samples):
+        pop.append(MatrixIndivid(genotype=(u.reshape(source_shape), s_base, vh_base)))
+
+    return pop
+
+
 def mutated_individ_only_s(source_individ: MatrixIndivid, mutate):
     u, s, vh = source_individ.genotype
     u_resulted = np.copy(u)

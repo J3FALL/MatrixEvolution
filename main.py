@@ -62,15 +62,15 @@ def evo_only_s_configurations():
 
 def evolution_only_u_component():
     source_matrix = np.random.rand(10, 10)
-    mutation = partial(mutation_gauss, mu=0, sigma=0.4, prob_global=0.1)
+    mutation = partial(mutation_gauss, mu=0, sigma=0.25, prob_global=0.1)
     crossover = partial(k_point_crossover, type='random', k=4)
-    init_population = partial(initial_population_only_u_random, source_matrix=source_matrix, bound_value=15.0)
+    init_population = partial(initial_population_only_u_random, source_matrix=source_matrix, bound_value=10.0)
     evo_operators = {'fitness': fitness_frob_norm_only_u,
                      'parent_selection': partial(select_by_tournament, tournament_size=20),
                      'mutation': partial(mutated_individ_only_u, mutate=mutation),
                      'crossover': partial(separate_crossover_only_u, crossover=crossover),
                      'initial_population': init_population}
-    meta_params = {'pop_size': 500, 'generations': 500, 'bound_value': 10.0,
+    meta_params = {'pop_size': 500, 'generations': 1000, 'bound_value': 10.0,
                    'selection_rate': 0.2, 'crossover_rate': 0.6, 'random_selection_rate': 0.2, 'mutation_rate': 0.3}
 
     return source_matrix, evo_operators, meta_params
@@ -80,7 +80,7 @@ def run_evolution():
     source_matrix, evo_operators, meta_params = evolution_only_u_component()
     evo_history = EvoHistory()
 
-    for run_id in range(5):
+    for run_id in range(1):
         print(f'run_id: {run_id}')
         evo_strategy = BasicEvoStrategy(evo_operators=evo_operators, meta_params=meta_params,
                                         history=evo_history, source_matrix=source_matrix)
