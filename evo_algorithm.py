@@ -169,7 +169,8 @@ class EvoHistory:
         plt.legend()
 
         if save_to_file:
-            plt.savefig(os.path.join(dir, 'loss_history_boxplots.png'))
+            plt.savefig(os.path.join(dir, f'{title}.png'))
+            plt.close()
         else:
             plt.show()
 
