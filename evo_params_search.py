@@ -53,9 +53,13 @@ def run_evolution():
 
 
 def mutation_search():
-    sigma_range = np.linspace(0.05, 2, 20)
-    prob_global = np.linspace(0.05, 0.5, 10)
-    mutation_rate = np.linspace(0.05, 0.5, 10)
+    # sigma_range = np.linspace(0.05, 2, 20)
+    sigma_range = [0.3]
+    prob_global = [0.05]
+    mutation_rate = [0.2]
+
+    # prob_global = np.linspace(0.05, 0.5, 10)
+    # mutation_rate = np.linspace(0.05, 0.5, 10)
 
     source_matrix, evo_operators, default_meta_params = default_only_u_configuration()
 
