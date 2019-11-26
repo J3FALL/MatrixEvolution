@@ -1,7 +1,39 @@
+from math import (
+    cos, sin,
+    radians)
+
 import numpy as np
 
 
-def initial_diag_matrix(size, norm_value):
+def initial_diag_matrix(matrix_size, norm_value):
+    diag_vector = initial_diagonal_by_prime_fraction(size=matrix_size, norm_value=norm_value)
+    matrix = np.diag(diag_vector)
+
+    return matrix
+
+
+def rotate_matrix(source_matrix, axis, angle):
+    size = source_matrix.shape[0]
+    rot_matrix = rotation_matrix(size=size, axis=axis, angle=angle)
+    resulted = np.dot(rot_matrix, source_matrix)
+    return resulted
+
+
+def rotation_matrix(size, axis, angle):
+    i, j = axis
+    angle_rad = radians(angle)
+
+    rot_matrix = np.diag(np.ones((size,)))
+
+    rot_matrix[i, i] = cos(angle_rad)
+    rot_matrix[j, j] = cos(angle_rad)
+    rot_matrix[i, j] = (-1.0) * sin(angle_rad)
+    rot_matrix[j, i] = sin(angle_rad)
+
+    return rot_matrix
+
+
+def initial_diagonal_by_prime_fraction(size, norm_value):
     norm_value = np.round(norm_value)
 
     int_parts = prime_factors(norm_value)
