@@ -5,6 +5,10 @@ import numpy as np
 from pysampling.sample import sample
 
 from matrix import MatrixIndivid
+from matrix_generator import (
+    rotate_matrix,
+    initial_diag_matrix
+)
 
 
 def fitness_frob_norm(source_matrix, svd):
@@ -90,6 +94,22 @@ def initial_pop_flat_lhs_only_u(pop_size, source_matrix, bound_value):
     pop = []
     for idx, u in enumerate(u_samples):
         pop.append(MatrixIndivid(genotype=(u.reshape(source_shape), s_base, vh_base)))
+
+    return pop
+
+
+def initial_population_only_u_rotations(pop_size, source_matrix, max_radius=10.0, radius_ticks=5, axis=(0, 1)):
+    _, s_base, vh_base = np.linalg.svd(source_matrix, full_matrices=True)
+    size = source_matrix.shape[0]
+    pop = []
+    for radius in np.linspace(10, max_radius, radius_ticks):
+        points_amount = int(pop_size / radius_ticks)
+        for k in range(points_amount):
+            angle = 360.0 / points_amount * k
+
+            u_diag = initial_diag_matrix(matrix_size=size, norm_value=radius)
+            u_resulted = rotate_matrix(source_matrix=u_diag, axis=axis, angle=angle)
+            pop.append(MatrixIndivid(genotype=(u_resulted, s_base, vh_base)))
 
     return pop
 

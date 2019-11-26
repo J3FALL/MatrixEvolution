@@ -7,7 +7,8 @@ from evo_operators import (
     mutation_gauss,
     two_point_crossover,
     k_point_crossover,
-    initial_pop_flat_lhs_only_u
+    initial_pop_flat_lhs_only_u,
+    initial_population_only_u_rotations
 )
 
 
@@ -92,3 +93,15 @@ def test_initial_pop_lhs_only_u_correct():
 
     assert len(initial_pop) == pop_size
     assert initial_pop[0].genotype[0].shape == source_shape
+
+
+def test_initial_population_only_u_rotations_correct():
+    source_shape = (10, 10)
+    source_matrix = np.zeros(source_shape)
+    pop_size = 100
+    max_radius = 10.0
+
+    initial_pop = initial_population_only_u_rotations(pop_size=pop_size, source_matrix=source_matrix,
+                                                      max_radius=max_radius)
+
+    assert len(initial_pop) == pop_size

@@ -45,6 +45,8 @@ def initial_diagonal_by_prime_fraction(size, norm_value):
         int_parts.append(value * value)
 
     resulted = np.asarray(int_parts + frac_parts)
+    # resulted = resulted / np.linalg.norm(resulted)
+    np.random.shuffle(resulted)
     return resulted
 
 
