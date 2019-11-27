@@ -102,6 +102,6 @@ def test_initial_population_only_u_rotations_correct():
     max_radius = 10.0
 
     initial_pop = initial_population_only_u_rotations(pop_size=pop_size, source_matrix=source_matrix,
-                                                      max_radius=max_radius)
+                                                      radius_range=max_radius)
 
     assert len(initial_pop) == pop_size

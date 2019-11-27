@@ -70,7 +70,7 @@ def evolution_only_u_component():
                      'mutation': partial(mutated_individ_only_u, mutate=mutation),
                      'crossover': partial(separate_crossover_only_u, crossover=crossover),
                      'initial_population': init_population}
-    meta_params = {'pop_size': 100, 'generations': 1000, 'bound_value': 10.0,
+    meta_params = {'pop_size': 100, 'generations': 50, 'bound_value': 10.0,
                    'selection_rate': 0.2, 'crossover_rate': 0.6, 'random_selection_rate': 0.2, 'mutation_rate': 0.2}
 
     return source_matrix, evo_operators, meta_params
@@ -80,7 +80,7 @@ def run_evolution():
     source_matrix, evo_operators, meta_params = evolution_only_u_component()
     evo_history = EvoHistory()
 
-    for run_id in range(5):
+    for run_id in range(50):
         print(f'run_id: {run_id}')
         evo_strategy = BasicEvoStrategy(evo_operators=evo_operators, meta_params=meta_params,
                                         history=evo_history, source_matrix=source_matrix)
@@ -91,7 +91,7 @@ def run_evolution():
         u_baseline, _, _ = np.linalg.svd(source_matrix)
         print(u_baseline)
         print(np.abs(u_best - u_baseline))
-    evo_history.loss_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=25)
+    evo_history.loss_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=1)
 
 
 if __name__ == '__main__':
