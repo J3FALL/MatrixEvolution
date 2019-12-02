@@ -1,6 +1,8 @@
 from functools import partial
 
+import jsonpickle
 import numpy as np
+import pickledb
 
 from evo_algorithm import (
     BasicEvoStrategy,
@@ -49,7 +51,13 @@ def run_evolution():
         u_baseline, _, _ = np.linalg.svd(source_matrix)
         print(u_baseline)
         print(np.abs(u_best - u_baseline))
-    evo_history.loss_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=1)
+
+    db = pickledb.load('example.db', False)
+    data = jsonpickle.encode(evo_history, keys=True)
+    db.set(key='test', value=data)
+    db.dump()
+    obj = jsonpickle.decode(db.get('test'), keys=True)
+    obj.loss_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=1)
 
 
 if __name__ == '__main__':

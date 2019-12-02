@@ -113,24 +113,24 @@ class BasicEvoStrategy:
 
 class EvoHistory:
     def __init__(self):
-        self.__history = {}
+        self._history = {}
         self.last_run_idx = -1
 
     def init_new_run(self):
         self.last_run_idx += 1
-        self.__history[self.last_run_idx] = []
+        self._history[self.last_run_idx] = []
 
     def new_generation(self, avg_fitness, min_fitness_in_pop, u_norm, s_norm, vh_norm):
         if self.last_run_idx < 0:
             self.init_new_run()
-        self.__history[self.last_run_idx].append(
+        self._history[self.last_run_idx].append(
             [avg_fitness, min_fitness_in_pop, u_norm, s_norm, vh_norm]
         )
 
     # TODO: refactor this
     def loss_history_boxplots(self, values_to_plot='min', save_to_file=False,
                               dir='', title='Fitness history by generations', gens_ticks=5):
-        gens = [gen for gen in range(len(self.__history[0]))]
+        gens = [gen for gen in range(len(self._history[0]))]
 
         avg_fitness_by_gens = []
 
@@ -145,8 +145,8 @@ class EvoHistory:
 
         for gen in gens:
             avg_loss_by_gen = []
-            for run_id in self.__history.keys():
-                avg_loss = self.__history[run_id][gen][value_idx]
+            for run_id in self._history.keys():
+                avg_loss = self._history[run_id][gen][value_idx]
                 avg_loss_by_gen.append(avg_loss)
             avg_fitness_by_gens.append(avg_loss_by_gen)
 
