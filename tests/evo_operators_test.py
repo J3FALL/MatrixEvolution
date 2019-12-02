@@ -99,9 +99,9 @@ def test_initial_population_only_u_rotations_correct():
     source_shape = (10, 10)
     source_matrix = np.zeros(source_shape)
     pop_size = 100
-    max_radius = 10.0
+    radius_range = (1.0, 5.0)
 
     initial_pop = initial_population_only_u_rotations(pop_size=pop_size, source_matrix=source_matrix,
-                                                      radius_range=max_radius)
+                                                      radius_range=radius_range)
 
     assert len(initial_pop) == pop_size
