@@ -64,7 +64,7 @@ def evolution_only_u_component():
     source_matrix = np.random.rand(10, 10)
     mutation = partial(mutation_gauss, mu=0, sigma=0.3, prob_global=0.05)
     crossover = partial(k_point_crossover, type='random', k=4)
-    init_population = partial(initial_population_only_u_random, source_matrix=source_matrix, bound_value=10.0)
+    init_population = partial(initial_population_only_u_random, source_matrix=source_matrix, bound_value=1.0)
     evo_operators = {'fitness': fitness_frob_norm_only_u,
                      'parent_selection': partial(select_by_tournament, tournament_size=20),
                      'mutation': partial(mutated_individ_only_u, mutate=mutation),

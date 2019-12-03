@@ -45,8 +45,12 @@ def initial_diagonal_scaled(size, range_value):
 
         frac_parts.append(1.0 / value)
         int_parts.append(value * value)
+    prod = np.prod(np.asarray(int_parts + frac_parts))
+    scale = prod / range_value
 
-    resulted = np.asarray(int_parts + frac_parts) / scale
+    resulted = np.asarray(int_parts + frac_parts)
+    resulted = resulted / scale
+    print(resulted)
     np.random.shuffle(resulted)
     return resulted
 
@@ -66,7 +70,7 @@ def prime_factors(n):
 
 
 def random_integers(amount=10):
-    values_range = np.arange(-100, 100)
+    values_range = np.arange(1, 100)
     values_range = values_range[values_range != 0]
 
     values = list(np.random.choice(values_range, amount))

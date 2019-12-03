@@ -1,8 +1,6 @@
 from functools import partial
 
-import jsonpickle
 import numpy as np
-import pickledb
 
 from evo_algorithm import (
     BasicEvoStrategy,
@@ -24,7 +22,7 @@ def evolution_only_u_component():
     mutation = partial(mutation_gauss, mu=0, sigma=0.3, prob_global=0.05)
     crossover = partial(k_point_crossover, type='random', k=4)
     init_population = partial(initial_population_only_u_rotations, source_matrix=source_matrix,
-                              radius_range=(0.1, 2.0), radius_ticks=5, axis=(4, 5))
+                              radius_range=(0.01, 0.5), radius_ticks=5, axis=(0, 1))
     evo_operators = {'fitness': fitness_frob_norm_only_u,
                      'parent_selection': partial(select_by_tournament, tournament_size=20),
                      'mutation': partial(mutated_individ_only_u, mutate=mutation),
@@ -40,7 +38,7 @@ def run_evolution():
     source_matrix, evo_operators, meta_params = evolution_only_u_component()
     evo_history = EvoHistory()
 
-    for run_id in range(5):
+    for run_id in range(50):
         print(f'run_id: {run_id}')
         evo_strategy = BasicEvoStrategy(evo_operators=evo_operators, meta_params=meta_params,
                                         history=evo_history, source_matrix=source_matrix)
@@ -52,12 +50,7 @@ def run_evolution():
         print(u_baseline)
         print(np.abs(u_best - u_baseline))
 
-    db = pickledb.load('example.db', False)
-    data = jsonpickle.encode(evo_history, keys=True)
-    db.set(key='test', value=data)
-    db.dump()
-    obj = jsonpickle.decode(db.get('test'), keys=True)
-    obj.loss_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=1)
+    evo_history.loss_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=1)
 
 
 if __name__ == '__main__':
