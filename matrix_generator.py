@@ -1,8 +1,11 @@
+from functools import partial
 from math import (
     cos, sin,
     radians)
 
 import numpy as np
+from scipy.optimize import (
+    minimize)
 
 
 def initial_diag_matrix(matrix_size, range_value):
@@ -33,9 +36,24 @@ def rotation_matrix(size, axis, angle):
     return rot_matrix
 
 
+def product_min(diag_values, range_value):
+    return np.linalg.norm(range_value - np.prod(diag_values))
+
+
+def initial_diagonal_minimized(matrix_size, range_value):
+    initial_values = np.random.randn(matrix_size, 1)
+
+    result = minimize(partial(product_min, range_value=range_value), initial_values,
+                      method='SLSQP',
+                      options={'disp': False})
+    diag_values = result.x
+    np.random.shuffle(diag_values)
+    matrix = np.diag(diag_values)
+    return matrix
+
+
 def initial_diagonal_scaled(size, range_value):
     scaled_value = np.random.randint(int(10e6), 5 * int(10e6))
-    scale = scaled_value / range_value
 
     int_parts = random_integers(amount=int(size / 2))
     frac_parts = []
@@ -50,7 +68,7 @@ def initial_diagonal_scaled(size, range_value):
 
     resulted = np.asarray(int_parts + frac_parts)
     resulted = resulted / scale
-    print(resulted)
+
     np.random.shuffle(resulted)
     return resulted
 

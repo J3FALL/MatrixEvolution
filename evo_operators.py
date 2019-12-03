@@ -7,7 +7,7 @@ from pysampling.sample import sample
 from matrix import MatrixIndivid
 from matrix_generator import (
     rotate_matrix,
-    initial_diag_matrix
+    initial_diagonal_minimized
 )
 
 
@@ -106,7 +106,7 @@ def initial_population_only_u_rotations(pop_size, source_matrix, radius_range=(0
         points_amount = int(pop_size / radius_ticks)
         for k in range(points_amount):
             angle = 360.0 / points_amount * k
-            u_diag = initial_diag_matrix(matrix_size=size, range_value=radius)
+            u_diag = initial_diagonal_minimized(matrix_size=size, range_value=radius)
             u_resulted = rotate_matrix(source_matrix=u_diag, axis=axis, angle=angle)
             pop.append(MatrixIndivid(genotype=(u_resulted, s_base, vh_base)))
 

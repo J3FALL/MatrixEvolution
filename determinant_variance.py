@@ -56,4 +56,4 @@ def find_min_of_product():
 
 
 if __name__ == '__main__':
-    find_min_of_product()
+    init_pop_with_rotation()

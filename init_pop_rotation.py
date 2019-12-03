@@ -22,13 +22,13 @@ def evolution_only_u_component():
     mutation = partial(mutation_gauss, mu=0, sigma=0.3, prob_global=0.05)
     crossover = partial(k_point_crossover, type='random', k=4)
     init_population = partial(initial_population_only_u_rotations, source_matrix=source_matrix,
-                              radius_range=(0.01, 0.5), radius_ticks=5, axis=(0, 1))
+                              radius_range=(0.1, 1.0), radius_ticks=5, axis=(4, 5))
     evo_operators = {'fitness': fitness_frob_norm_only_u,
                      'parent_selection': partial(select_by_tournament, tournament_size=20),
                      'mutation': partial(mutated_individ_only_u, mutate=mutation),
                      'crossover': partial(separate_crossover_only_u, crossover=crossover),
                      'initial_population': init_population}
-    meta_params = {'pop_size': 100, 'generations': 50, 'bound_value': 10.0,
+    meta_params = {'pop_size': 50, 'generations': 50, 'bound_value': 1.0,
                    'selection_rate': 0.2, 'crossover_rate': 0.6, 'random_selection_rate': 0.2, 'mutation_rate': 0.2}
 
     return source_matrix, evo_operators, meta_params
