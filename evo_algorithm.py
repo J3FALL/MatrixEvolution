@@ -127,11 +127,14 @@ class EvoHistory:
             [avg_fitness, min_fitness_in_pop, u_norm, s_norm, vh_norm]
         )
 
-    def loss_history_boxplots(self, values_to_plot='min', save_to_file=False,
-                              dir='', title='Fitness history by generations', gens_ticks=5):
+    def generations_amount(self):
+        return 0 if self.last_run_idx == -1 else len(self._history[0])
+
+    def fitness_history_boxplots(self, values_to_plot='min', save_to_file=False,
+                                 dir='', title='Fitness history by generations', gens_ticks=5):
         gens_total = len(self._history[0])
         reduced_gens = [gen for gen in range(0, gens_total, gens_ticks)]
-        reduced_values = self._reduced_history_values(values_to_plot=values_to_plot, gens_ticks=gens_ticks).tolist()
+        reduced_values = self.reduced_history_values(values_to_plot=values_to_plot, gens_ticks=gens_ticks).tolist()
         sns.boxplot(reduced_gens, reduced_values, color="seagreen")
 
         plt.title(title)
@@ -148,7 +151,7 @@ class EvoHistory:
         else:
             plt.show()
 
-    def _reduced_history_values(self, values_to_plot='min', gens_ticks=5):
+    def reduced_history_values(self, values_to_plot='min', gens_ticks=5):
         values_by_idx = {
             'avg': 0,
             'min': 1,

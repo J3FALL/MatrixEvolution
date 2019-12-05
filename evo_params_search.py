@@ -49,7 +49,7 @@ def run_evolution():
         u_baseline, _, _ = np.linalg.svd(source_matrix)
         print(u_baseline)
         print(np.abs(u_best - u_baseline))
-    evo_history.loss_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=25)
+    evo_history.fitness_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=25)
 
 
 def mutation_search():
@@ -85,9 +85,9 @@ def mutation_search():
             print(u_baseline)
             print(np.abs(u_best - u_baseline))
         title = f'only_u_sigma={sigma:.2f};prob_global={prob_global:.2f};mutation_rate={mutation_rate:.2f}'
-        evo_history.loss_history_boxplots(values_to_plot='min', save_to_file=True,
-                                          dir='runs_history/18.11.19/mutation_search',
-                                          title=title, gens_ticks=25)
+        evo_history.fitness_history_boxplots(values_to_plot='min', save_to_file=True,
+                                             dir='runs_history/18.11.19/mutation_search',
+                                             title=title, gens_ticks=25)
 
 
 if __name__ == '__main__':
