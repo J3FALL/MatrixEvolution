@@ -40,14 +40,15 @@ def product_min(diag_values, range_value):
     return np.linalg.norm(range_value - np.prod(diag_values))
 
 
-def initial_diagonal_minimized(matrix_size, range_value):
+def initial_diagonal_minimized(matrix_size, range_value, shuffle=True):
     initial_values = np.random.randn(matrix_size, 1)
 
     result = minimize(partial(product_min, range_value=range_value), initial_values,
                       method='SLSQP',
                       options={'disp': False})
     diag_values = result.x
-    np.random.shuffle(diag_values)
+    if shuffle:
+        np.random.shuffle(diag_values)
     matrix = np.diag(diag_values)
     return matrix
 

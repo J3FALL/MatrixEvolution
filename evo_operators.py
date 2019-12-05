@@ -104,9 +104,9 @@ def initial_population_only_u_rotations(pop_size, source_matrix, radius_range=(0
     pop = []
     for radius in np.linspace(radius_range[0], radius_range[1], radius_ticks):
         points_amount = int(pop_size / radius_ticks)
+        u_diag = initial_diagonal_minimized(matrix_size=size, range_value=radius)
         for k in range(points_amount):
             angle = 360.0 / points_amount * k
-            u_diag = initial_diagonal_minimized(matrix_size=size, range_value=radius)
             u_resulted = rotate_matrix(source_matrix=u_diag, axis=axis, angle=angle)
             pop.append(MatrixIndivid(genotype=(u_resulted, s_base, vh_base)))
 

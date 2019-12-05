@@ -8,6 +8,7 @@ from evo_operators import (
     initial_population_only_u_random,
     initial_population_only_u_rotations
 )
+from matrix_generator import initial_diagonal_minimized
 
 
 def init_pop_randomly():
@@ -54,6 +55,20 @@ def find_min_of_product():
     print(product_min(result.x, range_value))
 
 
+def initial_diag_variance_discovery():
+    size, range_value = 10, 0.5
+    samples_amount = 1000
+    samples = np.zeros((samples_amount, size))
+
+    for idx in range(samples_amount):
+        matrix = initial_diagonal_minimized(matrix_size=size, range_value=range_value)
+        diag = matrix.diagonal()
+        samples[idx, :] = diag
+
+    for val_idx in range(size):
+        mean, var = np.mean(samples[:, val_idx]), np.var(samples[:, val_idx])
+        print(f'Value idx {val_idx}: {mean} +/- {var}')
+
+
 if __name__ == '__main__':
     init_pop_with_rotation()
-    init_pop_randomly()
