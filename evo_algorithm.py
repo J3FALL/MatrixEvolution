@@ -112,9 +112,10 @@ class BasicEvoStrategy:
 
 
 class EvoHistory:
-    def __init__(self):
+    def __init__(self, description='test'):
         self._history = {}
         self.last_run_idx = -1
+        self.description = description
 
     def init_new_run(self):
         self.last_run_idx += 1
