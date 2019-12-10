@@ -82,7 +82,7 @@ class BasicEvoStrategy:
 
             offspring.extend([child_first, child_second])
             childs_amount += 2
-        random_chosen = self.__diversity(rate=self.meta_params['random_selection_rate'], fraction_worst=0.5)
+        random_chosen = self.__diversity(rate=self.meta_params['random_selection_rate'], fraction_worst=1.0)
         offspring.extend(random_chosen)
         return offspring
 

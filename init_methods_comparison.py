@@ -12,11 +12,11 @@ def comparison_plot():
     random_run = storage.run_by_key(key='random')
     rot_run = storage.run_by_key(key='with_rot')
 
-    joint_convergence_boxplots(history_runs=[random_run, rot_run], values_to_plot='min', gens_ticks=5)
+    joint_convergence_boxplots(history_runs=[random_run, rot_run], values_to_plot='min', gens_ticks=1)
 
 
 def evo_random_vs_rotations():
-    source_matrix = np.random.rand(20, 20)
+    source_matrix = np.random.rand(10, 10)
 
     evo_random(source_matrix=source_matrix)
     evo_with_rotations(source_matrix=source_matrix)
