@@ -5,6 +5,10 @@ import numpy as np
 from pysampling.sample import sample
 
 from matrix import MatrixIndivid
+from matrix_generator import (
+    rotate_matrix,
+    initial_diagonal_minimized
+)
 
 
 def fitness_frob_norm(source_matrix, svd):
@@ -20,6 +24,12 @@ def fitness_s_component_diff(source_matrix, svd):
 
     diff = np.sum(np.abs(np.sort(s_target) - np.sort(s_base)))
     return diff
+
+
+def fitness_frob_norm_only_u(source_matrix, svd):
+    u_base, _, _ = np.linalg.svd(source_matrix, full_matrices=True)
+    u_target, _, _ = svd
+    return np.linalg.norm(u_target - u_base)
 
 
 def new_individ_random_svd(source_matrix, bound_value=10.0):
@@ -59,6 +69,50 @@ def initial_population_from_lhs_only_s(samples_amount, vector_size, values_range
     return pop
 
 
+def initial_population_only_u_random(pop_size, source_matrix, bound_value=10.0):
+    _, s_base, vh_base = np.linalg.svd(source_matrix, full_matrices=True)
+    size = source_matrix.shape
+
+    pop = []
+    for _ in range(pop_size):
+        u = random_matrix(size, bound_value=bound_value)
+        pop.append(MatrixIndivid(genotype=(u, s_base, vh_base)))
+
+    return pop
+
+
+def initial_pop_flat_lhs_only_u(pop_size, source_matrix, bound_value):
+    source_shape = source_matrix.shape
+    vector_size = np.ndarray.flatten(source_matrix).shape[0]
+
+    _, s_base, vh_base = np.linalg.svd(source_matrix, full_matrices=True)
+
+    print('Sampling from LHS...')
+    u_samples = bound_value * sample("lhs", pop_size, vector_size) - bound_value / 2.0
+    print('Sampling: done')
+
+    pop = []
+    for idx, u in enumerate(u_samples):
+        pop.append(MatrixIndivid(genotype=(u.reshape(source_shape), s_base, vh_base)))
+
+    return pop
+
+
+def initial_population_only_u_rotations(pop_size, source_matrix, radius_range=(0.1, 0.5), radius_ticks=5, axis=(0, 1)):
+    _, s_base, vh_base = np.linalg.svd(source_matrix, full_matrices=True)
+    size = source_matrix.shape[0]
+    pop = []
+    for radius in np.linspace(radius_range[0], radius_range[1], radius_ticks):
+        points_amount = int(pop_size / radius_ticks)
+        u_diag = initial_diagonal_minimized(matrix_size=size, range_value=radius)
+        for k in range(points_amount):
+            angle = 360.0 / points_amount * k
+            u_resulted = rotate_matrix(source_matrix=u_diag, axis=axis, angle=angle)
+            pop.append(MatrixIndivid(genotype=(u_resulted, s_base, vh_base)))
+
+    return pop
+
+
 def mutated_individ_only_s(source_individ: MatrixIndivid, mutate):
     u, s, vh = source_individ.genotype
     u_resulted = np.copy(u)
@@ -70,11 +124,35 @@ def mutated_individ_only_s(source_individ: MatrixIndivid, mutate):
     return resulted
 
 
+def mutated_individ_only_u(source_individ: MatrixIndivid, mutate):
+    u, s, vh = source_individ.genotype
+    s_resulted = np.copy(s)
+    vh_resulted = np.copy(vh)
+
+    u_mutated = mutate(candidate=u)
+    resulted = MatrixIndivid(genotype=(u_mutated, s_resulted, vh_resulted))
+
+    return resulted
+
+
 def separate_crossover_only_s(parent_first: MatrixIndivid, parent_second: MatrixIndivid, crossover):
     u_first, u_second = parent_first.genotype[0], parent_second.genotype[0],
 
     s_first, s_second = crossover(parent_first=parent_first.genotype[1],
                                   parent_second=parent_second.genotype[1])
+
+    vh_first, vh_second = parent_first.genotype[2], parent_second.genotype[2]
+
+    child_first = MatrixIndivid(genotype=(u_first, s_first, vh_first))
+    child_second = MatrixIndivid(genotype=(u_second, s_second, vh_second))
+
+    return child_first, child_second
+
+
+def separate_crossover_only_u(parent_first: MatrixIndivid, parent_second: MatrixIndivid, crossover):
+    u_first, u_second = crossover(parent_first.genotype[0], parent_second.genotype[0])
+
+    s_first, s_second = parent_first.genotype[1], parent_second.genotype[1]
 
     vh_first, vh_second = parent_first.genotype[2], parent_second.genotype[2]
 
@@ -149,6 +227,9 @@ def two_point_crossover(parent_first, parent_second, type='horizontal'):
 def k_point_crossover(parent_first, parent_second, type='horizontal', k=3):
     size = parent_first.shape
     child_first, child_second = np.zeros(size), np.zeros(size)
+
+    if type == 'random':
+        type = np.random.choice(['horizontal', 'vertical'])
 
     if type == 'horizontal':
         points = __random_cross_points(max_size=size[0], k=k)

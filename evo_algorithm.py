@@ -82,7 +82,7 @@ class BasicEvoStrategy:
 
             offspring.extend([child_first, child_second])
             childs_amount += 2
-        random_chosen = self.__diversity(rate=self.meta_params['random_selection_rate'], fraction_worst=0.5)
+        random_chosen = self.__diversity(rate=self.meta_params['random_selection_rate'], fraction_worst=1.0)
         offspring.extend(random_chosen)
         return offspring
 
@@ -112,28 +112,47 @@ class BasicEvoStrategy:
 
 
 class EvoHistory:
-    def __init__(self):
-        self.__history = {}
+    def __init__(self, description='test'):
+        self._history = {}
         self.last_run_idx = -1
+        self.description = description
 
     def init_new_run(self):
         self.last_run_idx += 1
-        self.__history[self.last_run_idx] = []
+        self._history[self.last_run_idx] = []
 
     def new_generation(self, avg_fitness, min_fitness_in_pop, u_norm, s_norm, vh_norm):
         if self.last_run_idx < 0:
             self.init_new_run()
-        self.__history[self.last_run_idx].append(
+        self._history[self.last_run_idx].append(
             [avg_fitness, min_fitness_in_pop, u_norm, s_norm, vh_norm]
         )
 
-    # TODO: refactor this
-    def loss_history_boxplots(self, values_to_plot='min', save_to_file=False,
-                              dir='', title='Fitness history by generations', gens_ticks=5):
-        gens = [gen for gen in range(len(self.__history[0]))]
+    def generations_amount(self):
+        return 0 if self.last_run_idx == -1 else len(self._history[0])
 
-        avg_fitness_by_gens = []
+    def fitness_history_boxplots(self, values_to_plot='min', save_to_file=False,
+                                 dir='', title='Fitness history by generations', gens_ticks=5):
+        gens_total = len(self._history[0])
+        reduced_gens = [gen for gen in range(0, gens_total, gens_ticks)]
+        reduced_values = self.reduced_history_values(values_to_plot=values_to_plot, gens_ticks=gens_ticks).tolist()
+        sns.boxplot(reduced_gens, reduced_values, color="seagreen")
 
+        plt.title(title)
+        plt.ylabel('Fitness')
+        plt.xlabel('Generation, #')
+
+        lowest_value = np.min(reduced_values)
+        plt.plot([], [], ' ', label=f'Lowest value in history: {lowest_value}')
+        plt.legend()
+
+        if save_to_file:
+            plt.savefig(os.path.join(dir, f'{title}.png'))
+            plt.close()
+        else:
+            plt.show()
+
+    def reduced_history_values(self, values_to_plot='min', gens_ticks=5):
         values_by_idx = {
             'avg': 0,
             'min': 1,
@@ -143,31 +162,17 @@ class EvoHistory:
         }
         value_idx = values_by_idx[values_to_plot]
 
-        for gen in gens:
-            avg_loss_by_gen = []
-            for run_id in self.__history.keys():
-                avg_loss = self.__history[run_id][gen][value_idx]
-                avg_loss_by_gen.append(avg_loss)
-            avg_fitness_by_gens.append(avg_loss_by_gen)
+        runs, values_types = len(self._history.keys()), len(values_by_idx.keys())
+        gens_total = len(self._history[0])
 
-        reduced_gens = []
-        reduced_loss = []
+        history = np.zeros((runs, gens_total, values_types))
+        for run_id in range(runs):
+            history[run_id, :, :] = np.asarray(self._history[run_id])
 
-        for gen in gens:
-            if gen % gens_ticks == 0:
-                reduced_gens.append(gen)
-                reduced_loss.append(avg_fitness_by_gens[gen])
+        values_by_gens = history[:, :, value_idx].T
+        reduced_by_gens = values_by_gens[::gens_ticks, :]
 
-        sns.boxplot(reduced_gens, reduced_loss, color="seagreen")
-
-        plt.title(title)
-        plt.ylabel('Fitness')
-        plt.xlabel('Generation, #')
-
-        if save_to_file:
-            plt.savefig(os.path.join(dir, 'loss_history_boxplots.png'))
-        else:
-            plt.show()
+        return reduced_by_gens
 
 
 def svd_frob_norm(best_candidate, matrix):

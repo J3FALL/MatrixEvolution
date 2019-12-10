@@ -6,7 +6,9 @@ from evo_operators import (
     single_point_crossover,
     mutation_gauss,
     two_point_crossover,
-    k_point_crossover
+    k_point_crossover,
+    initial_pop_flat_lhs_only_u,
+    initial_population_only_u_rotations
 )
 
 
@@ -79,3 +81,27 @@ def test_k_point_crossover_correct():
     print(f'Child second: {child_second}')
 
     assert parent_first.shape == child_first.shape == child_second.shape
+
+
+def test_initial_pop_lhs_only_u_correct():
+    source_shape = (10, 10)
+    source_matrix = np.zeros(source_shape)
+    pop_size = 10
+    values_range = 10.0
+
+    initial_pop = initial_pop_flat_lhs_only_u(pop_size=pop_size, bound_value=values_range, source_matrix=source_matrix)
+
+    assert len(initial_pop) == pop_size
+    assert initial_pop[0].genotype[0].shape == source_shape
+
+
+def test_initial_population_only_u_rotations_correct():
+    source_shape = (10, 10)
+    source_matrix = np.zeros(source_shape)
+    pop_size = 100
+    radius_range = (1.0, 5.0)
+
+    initial_pop = initial_population_only_u_rotations(pop_size=pop_size, source_matrix=source_matrix,
+                                                      radius_range=radius_range)
+
+    assert len(initial_pop) == pop_size
