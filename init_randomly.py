@@ -69,7 +69,7 @@ def evolution_only_u_component(source_matrix, crossover):
                      'mutation': partial(mutated_individ_only_u, mutate=mutation),
                      'crossover': partial(separate_crossover_only_u, crossover=crossover),
                      'initial_population': init_population}
-    meta_params = {'pop_size': 100, 'generations': 50, 'bound_value': 1.0,
+    meta_params = {'pop_size': 100, 'generations': 300, 'bound_value': 1.0,
                    'selection_rate': 0.2, 'crossover_rate': 0.80, 'random_selection_rate': 0.0, 'mutation_rate': 0.2}
 
     return evo_operators, meta_params

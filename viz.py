@@ -45,7 +45,7 @@ def joint_dataframe(all_runs: List[EvoHistory], gens_ticks):
                 run_label = run.description
                 df = df.append(
                     pd.Series(
-                        {'config': run_label, 'gen': gen, 'run_id': run_id, 'fitness': reduced_values[gen, run_id]}),
+                        {'config': run_label, 'gen': gen * gens_ticks, 'run_id': run_id, 'fitness': reduced_values[gen, run_id]}),
                     ignore_index=True
                 )
     df.gen = df.gen.astype(int)

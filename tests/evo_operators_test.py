@@ -108,10 +108,24 @@ def test_initial_population_only_u_rotations_correct():
     assert len(initial_pop) == pop_size
 
 
-def test_geo_crossover_correct():
-    size = (10, 10)
-    parent_first, parent_second = np.zeros(size), np.ones(size)
+def test_geo_crossover_random_box_correct():
+    shape = (10, 10)
+    parent_first, parent_second = np.zeros(shape), np.ones(shape)
 
     child_first, child_second = geo_crossover(parent_first=parent_first, parent_second=parent_second)
 
     assert child_first.shape == child_second.shape == parent_first.shape
+
+
+def test_geo_crossover_fixed_box_correct():
+    shape = (10, 10)
+    parent_first, parent_second = np.zeros(shape), np.ones(shape)
+    top_left = (3, 3)
+    box_size = 3
+    child_first, child_second = geo_crossover(parent_first=parent_first, parent_second=parent_second,
+                                              random_box=False, top_left=top_left, box_size=box_size)
+
+    expected_box = parent_first[top_left[0]:top_left[0] + box_size, top_left[1]: top_left[1] + box_size]
+    actual_box = child_first[top_left[0]:top_left[0] + box_size, top_left[1]: top_left[1] + box_size]
+
+    assert np.array_equal(expected_box, actual_box)
