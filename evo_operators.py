@@ -260,6 +260,23 @@ def k_point_crossover(parent_first, parent_second, type='horizontal', k=3):
     return child_first, child_second
 
 
+def geo_crossover(parent_first, parent_second):
+    size = parent_first.shape
+
+    top_left = (np.random.randint(low=0, high=size[0] - 1),
+                np.random.randint(low=0, high=size[1]) - 1)
+    bottom_right = (np.random.randint(low=min(top_left[0] + 1, size[0]), high=size[0]),
+                    np.random.randint(low=min(top_left[1] + 1, size[1]), high=size[1]))
+
+    inside_mask = np.zeros(size)
+    inside_mask[top_left[0]:bottom_right[0], top_left[1]:bottom_right[1]] = 1.0
+
+    child_first = inside_mask * parent_first + (1.0 - inside_mask) * parent_second
+    child_second = inside_mask * parent_second + (1.0 - inside_mask) * parent_first
+
+    return child_first, child_second
+
+
 def __random_cross_points(max_size, k=3):
     points = random.sample(range(0, max_size), k)
     if 0 not in points:

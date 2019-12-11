@@ -8,7 +8,8 @@ from evo_operators import (
     two_point_crossover,
     k_point_crossover,
     initial_pop_flat_lhs_only_u,
-    initial_population_only_u_rotations
+    initial_population_only_u_rotations,
+    geo_crossover
 )
 
 
@@ -105,3 +106,12 @@ def test_initial_population_only_u_rotations_correct():
                                                       radius_range=radius_range)
 
     assert len(initial_pop) == pop_size
+
+
+def test_geo_crossover_correct():
+    size = (10, 10)
+    parent_first, parent_second = np.zeros(size), np.ones(size)
+
+    child_first, child_second = geo_crossover(parent_first=parent_first, parent_second=parent_second)
+
+    assert child_first.shape == child_second.shape == parent_first.shape
