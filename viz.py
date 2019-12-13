@@ -57,7 +57,7 @@ def joint_dataframe(all_runs: List[EvoHistory], gens_ticks):
 def components_comparison(values: List[np.ndarray]):
     values_amount = len(values)
     size = values[0].shape[0]
-    fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+    fig, axs = plt.subplots(2, 2, figsize=(15, 15))
 
     for idx in range(values_amount):
         fig_i, fig_j = divmod(idx, 2)

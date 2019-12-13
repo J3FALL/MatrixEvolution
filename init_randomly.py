@@ -18,7 +18,7 @@ from evo_operators import (
     mutated_individ_only_u,
     separate_crossover_only_u,
     mutated_individ_only_s,
-    geo_crossover_fixed_box
+    dynamic_geo_crossover
 )
 from evo_storage import EvoStorage
 from viz import components_comparison
@@ -65,7 +65,7 @@ def evo_only_s_configurations():
 
 def evolution_only_u_component(source_matrix, crossover):
     mutation = partial(mutation_gauss, mu=0, sigma=0.3, prob_global=0.05)
-    init_population = partial(initial_population_only_u_random, source_matrix=source_matrix, bound_value=1.0)
+    init_population = partial(initial_population_only_u_random, source_matrix=source_matrix, bound_value=0.5)
     evo_operators = {'fitness': fitness_frob_norm_only_u,
                      'parent_selection': partial(select_by_tournament, tournament_size=20),
                      'mutation': partial(mutated_individ_only_u, mutate=mutation),
@@ -103,14 +103,15 @@ def evo_random(source_matrix, runs=10, crossover=partial(k_point_crossover, type
         u_baseline, _, _ = np.linalg.svd(source_matrix)
         print(u_baseline)
         print(np.abs(u_best - u_baseline))
-        components_comparison([best_solution.genotype[0], worst_solution.genotype[0],
-                               best_solution.genotype[0] - worst_solution.genotype[0],
-                               best_solution.genotype[0] - u_baseline])
+        # components_comparison([best_solution.genotype[0], worst_solution.genotype[0],
+        #                        best_solution.genotype[0] - worst_solution.genotype[0],
+        #                        best_solution.genotype[0] - u_baseline])
     # evo_history.fitness_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=1)
     storage.save_run(key=run_key, evo_history=evo_history)
 
 
 if __name__ == '__main__':
-    source_matrix = np.random.rand(10, 10)
-    crossover = partial(geo_crossover_fixed_box, box_size=4)
+    source_matrix = np.random.rand(20, 20)
+    crossover = partial(dynamic_geo_crossover, box_size_initial=10)
+    # crossover = partial(geo_crossover_fixed_box, box_size=4)
     evo_random(source_matrix=source_matrix, crossover=crossover)

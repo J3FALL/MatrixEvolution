@@ -74,7 +74,7 @@ class BasicEvoStrategy:
 
         while childs_amount < childs_total:
             parent_first, parent_second = np.random.choice(selected_parents), np.random.choice(selected_parents)
-            child_first, child_second = self.crossover(parent_first, parent_second)
+            child_first, child_second = self.crossover(parent_first, parent_second, current_gen=self.cur_gen)
             # for val in ['u', 's', 'vh']:
             #     first_val, second_val = getattr(parent_first, val), getattr(parent_second, val)
             #

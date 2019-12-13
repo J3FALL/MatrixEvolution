@@ -149,8 +149,8 @@ def separate_crossover_only_s(parent_first: MatrixIndivid, parent_second: Matrix
     return child_first, child_second
 
 
-def separate_crossover_only_u(parent_first: MatrixIndivid, parent_second: MatrixIndivid, crossover):
-    u_first, u_second = crossover(parent_first.genotype[0], parent_second.genotype[0])
+def separate_crossover_only_u(parent_first: MatrixIndivid, parent_second: MatrixIndivid, crossover, **kwargs):
+    u_first, u_second = crossover(parent_first.genotype[0], parent_second.genotype[0], **kwargs)
 
     s_first, s_second = parent_first.genotype[1], parent_second.genotype[1]
 
@@ -224,7 +224,7 @@ def two_point_crossover(parent_first, parent_second, type='horizontal'):
     return child_first, child_second
 
 
-def k_point_crossover(parent_first, parent_second, type='horizontal', k=3):
+def k_point_crossover(parent_first, parent_second, type='horizontal', k=3, **kwargs):
     size = parent_first.shape
     child_first, child_second = np.zeros(size), np.zeros(size)
 
@@ -398,7 +398,7 @@ def __matrix_from_svd(u, s, vh):
     return np.dot(u * s, vh)
 
 
-def geo_crossover_fixed_box(parent_first, parent_second, box_size):
+def geo_crossover_fixed_box(parent_first, parent_second, box_size, **kwargs):
     size = parent_first.shape
     top_left = np.random.randint(low=0, high=size[0]), np.random.randint(low=0, high=size[1])
 
@@ -406,3 +406,8 @@ def geo_crossover_fixed_box(parent_first, parent_second, box_size):
                                               top_left=top_left, box_size=box_size)
 
     return child_first, child_second
+
+
+def dynamic_geo_crossover(parent_first, parent_second, box_size_initial, current_gen, **kwargs):
+    box_size = box_size_initial - current_gen // 100
+    return geo_crossover_fixed_box(parent_first=parent_first, parent_second=parent_second, box_size=box_size, **kwargs)
