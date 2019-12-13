@@ -4,7 +4,7 @@ import numpy as np
 
 from evo_operators import (
     k_point_crossover,
-    geo_crossover
+    geo_crossover_fixed_box
 )
 from evo_storage import EvoStorage
 from init_randomly import evo_random
@@ -17,17 +17,7 @@ def comparison_plot(run_key_first, run_key_second):
     random_run = storage.run_by_key(key=run_key_first)
     rot_run = storage.run_by_key(key=run_key_second)
 
-    joint_convergence_boxplots(history_runs=[random_run, rot_run], values_to_plot='min', gens_ticks=5)
-
-
-def geo_crossover_fixed_box(parent_first, parent_second, box_size):
-    size = parent_first.shape
-    top_left = np.random.randint(low=0, high=size[0]), np.random.randint(low=0, high=size[1])
-
-    child_first, child_second = geo_crossover(parent_first=parent_first, parent_second=parent_second, random_box=False,
-                                              top_left=top_left, box_size=box_size)
-
-    return child_first, child_second
+    joint_convergence_boxplots(history_runs=[random_run, rot_run], values_to_plot='min', gens_ticks=10)
 
 
 def evo_random_vs_rotations():

@@ -45,9 +45,29 @@ def joint_dataframe(all_runs: List[EvoHistory], gens_ticks):
                 run_label = run.description
                 df = df.append(
                     pd.Series(
-                        {'config': run_label, 'gen': gen * gens_ticks, 'run_id': run_id, 'fitness': reduced_values[gen, run_id]}),
+                        {'config': run_label, 'gen': gen * gens_ticks, 'run_id': run_id,
+                         'fitness': reduced_values[gen, run_id]}),
                     ignore_index=True
                 )
     df.gen = df.gen.astype(int)
 
     return df
+
+
+def components_comparison(values: List[np.ndarray]):
+    values_amount = len(values)
+    size = values[0].shape[0]
+    fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+
+    for idx in range(values_amount):
+        fig_i, fig_j = divmod(idx, 2)
+        value = values[idx]
+        axs[fig_i, fig_j].imshow(value)
+        for i in range(size):
+            for j in range(size):
+                axs[fig_i, fig_j].text(j, i, np.round(value[i, j], 2),
+                                       ha="center", va="center", color="w")
+        axs[fig_i, fig_j].set_xticklabels(np.arange(size))
+        axs[fig_i, fig_j].set_yticklabels(np.arange(size))
+    plt.subplots_adjust(wspace=0.1, hspace=0.1)
+    plt.show()
