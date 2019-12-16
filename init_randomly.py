@@ -18,10 +18,10 @@ from evo_operators import (
     mutated_individ_only_u,
     separate_crossover_only_u,
     mutated_individ_only_s,
-    dynamic_geo_crossover
+    decreasing_dynamic_geo_crossover,
+    increasing_dynamic_geo_crossover
 )
 from evo_storage import EvoStorage
-from viz import components_comparison
 
 
 def compare_results(matrix, evo_results):
@@ -71,8 +71,8 @@ def evolution_only_u_component(source_matrix, crossover):
                      'mutation': partial(mutated_individ_only_u, mutate=mutation),
                      'crossover': partial(separate_crossover_only_u, crossover=crossover),
                      'initial_population': init_population}
-    meta_params = {'pop_size': 100, 'generations': 1000, 'bound_value': 0.5,
-                   'selection_rate': 0.2, 'crossover_rate': 0.80, 'random_selection_rate': 0.0, 'mutation_rate': 0.2}
+    meta_params = {'pop_size': 100, 'generations': 3000, 'bound_value': 0.5,
+                   'selection_rate': 0.2, 'crossover_rate': 0.60, 'random_selection_rate': 0.2, 'mutation_rate': 0.2}
 
     return evo_operators, meta_params
 
@@ -111,7 +111,9 @@ def evo_random(source_matrix, runs=10, crossover=partial(k_point_crossover, type
 
 
 if __name__ == '__main__':
-    source_matrix = np.random.rand(20, 20)
-    crossover = partial(dynamic_geo_crossover, box_size_initial=10)
+    source_matrix = np.random.rand(10, 10)
+    dynamic_crossover = partial(decreasing_dynamic_geo_crossover, box_size_initial=5)
+    reversed_dynamic_crossover = partial(increasing_dynamic_geo_crossover, box_size_initial=1)
+    k_point = partial(k_point_crossover, k=4)
     # crossover = partial(geo_crossover_fixed_box, box_size=4)
-    evo_random(source_matrix=source_matrix, crossover=crossover)
+    evo_random(source_matrix=source_matrix, crossover=reversed_dynamic_crossover)

@@ -264,8 +264,8 @@ def geo_crossover(parent_first, parent_second, random_box=True, **kwargs):
     size = parent_first.shape
 
     if random_box:
-        top_left = (np.random.randint(low=0, high=size[0] - 1),
-                    np.random.randint(low=0, high=size[1]) - 1)
+        top_left = (np.random.randint(low=0, high=size[0]),
+                    np.random.randint(low=0, high=size[1]))
         bottom_right = (np.random.randint(low=min(top_left[0] + 1, size[0]), high=size[0]),
                         np.random.randint(low=min(top_left[1] + 1, size[1]), high=size[1]))
     else:
@@ -408,6 +408,11 @@ def geo_crossover_fixed_box(parent_first, parent_second, box_size, **kwargs):
     return child_first, child_second
 
 
-def dynamic_geo_crossover(parent_first, parent_second, box_size_initial, current_gen, **kwargs):
-    box_size = box_size_initial - current_gen // 100
+def decreasing_dynamic_geo_crossover(parent_first, parent_second, box_size_initial, current_gen, **kwargs):
+    box_size = box_size_initial - current_gen // 600
+    return geo_crossover_fixed_box(parent_first=parent_first, parent_second=parent_second, box_size=box_size, **kwargs)
+
+
+def increasing_dynamic_geo_crossover(parent_first, parent_second, box_size_initial, current_gen, **kwargs):
+    box_size = box_size_initial + current_gen // 600
     return geo_crossover_fixed_box(parent_first=parent_first, parent_second=parent_second, box_size=box_size, **kwargs)
