@@ -266,8 +266,8 @@ def geo_crossover(parent_first, parent_second, random_box=True, **kwargs):
     if random_box:
         top_left = (np.random.randint(low=0, high=size[0]),
                     np.random.randint(low=0, high=size[1]))
-        bottom_right = (np.random.randint(low=min(top_left[0] + 1, size[0]), high=size[0]),
-                        np.random.randint(low=min(top_left[1] + 1, size[1]), high=size[1]))
+        box_size = np.random.randint(low=0, high=size[0])
+        bottom_right = (top_left[0] + box_size, top_left[1] + box_size)
     else:
         box_size = kwargs['box_size']
         top_left = kwargs['top_left']
