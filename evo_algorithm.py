@@ -27,6 +27,7 @@ class BasicEvoStrategy:
         self.matrix_size = source_matrix.shape
 
         self.history = history
+        self.__first_min_fitness = 10e9
 
     def run(self):
         self.history.init_new_run()
@@ -34,11 +35,17 @@ class BasicEvoStrategy:
         while not self.__stop_criteria():
             print(self.cur_gen)
             self.__assign_fitness_values()
+            top = self.graded_by_fitness()[0]
+
+            if self.cur_gen == 0:
+                self.__first_min_fitness = top.fitness_value
+
             self.__history_callback()
 
-            top = self.graded_by_fitness()[0]
+            normed_top = top.fitness_value / self.__first_min_fitness
             avg = np.average([individ.fitness_value for individ in self.pop])
             print(f'Best candidate with fitness: {top.fitness_value}')
+            print(f'Best candidate with normed fitness: {normed_top}')
             print(f'Average fitness in population: {avg}')
 
             offspring = self.__new_offspring()
@@ -106,8 +113,10 @@ class BasicEvoStrategy:
         best_candidate = self.graded_by_fitness()[0]
         u_norm, s_norm, vh_norm = svd_frob_norm(best_candidate=best_candidate.genotype, matrix=self.source_matrix)
         _, s, _ = np.linalg.svd(self.source_matrix, full_matrices=True)
+        min_normed_fitness = best_candidate.fitness_value / self.__first_min_fitness
 
         self.history.new_generation(avg_fitness=np.average(fitness), min_fitness_in_pop=np.min(fitness),
+                                    normed_min_fitness=min_normed_fitness,
                                     u_norm=u_norm, s_norm=s_norm, vh_norm=vh_norm)
 
 
@@ -121,11 +130,11 @@ class EvoHistory:
         self.last_run_idx += 1
         self._history[self.last_run_idx] = []
 
-    def new_generation(self, avg_fitness, min_fitness_in_pop, u_norm, s_norm, vh_norm):
+    def new_generation(self, avg_fitness, min_fitness_in_pop, normed_min_fitness, u_norm, s_norm, vh_norm):
         if self.last_run_idx < 0:
             self.init_new_run()
         self._history[self.last_run_idx].append(
-            [avg_fitness, min_fitness_in_pop, u_norm, s_norm, vh_norm]
+            [avg_fitness, min_fitness_in_pop, normed_min_fitness, u_norm, s_norm, vh_norm]
         )
 
     def generations_amount(self):
@@ -156,9 +165,10 @@ class EvoHistory:
         values_by_idx = {
             'avg': 0,
             'min': 1,
-            'u_norm': 2,
-            's_norm': 3,
-            'vh_norm': 4
+            'normed_min': 2,
+            'u_norm': 3,
+            's_norm': 4,
+            'vh_norm': 5
         }
         value_idx = values_by_idx[values_to_plot]
 

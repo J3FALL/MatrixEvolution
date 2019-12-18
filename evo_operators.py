@@ -29,7 +29,16 @@ def fitness_s_component_diff(source_matrix, svd):
 def fitness_frob_norm_only_u(source_matrix, svd):
     u_base, _, _ = np.linalg.svd(source_matrix, full_matrices=True)
     u_target, _, _ = svd
-    return np.linalg.norm(u_target - u_base)
+    norm = np.linalg.norm(u_target - u_base)
+    return norm
+
+
+def fitness_inf_norm_only_u(source_matrix, svd):
+    u_base, _, _ = np.linalg.svd(source_matrix, full_matrices=True)
+    u_target, _, _ = svd
+    inf_metric = np.linalg.norm(u_target - u_base, ord=np.inf)
+
+    return inf_metric
 
 
 def new_individ_random_svd(source_matrix, bound_value=10.0):
@@ -408,11 +417,12 @@ def geo_crossover_fixed_box(parent_first, parent_second, box_size, **kwargs):
     return child_first, child_second
 
 
+# TODO: change box_size to be adaptive to total_generations
 def decreasing_dynamic_geo_crossover(parent_first, parent_second, box_size_initial, current_gen, **kwargs):
-    box_size = box_size_initial - current_gen // 600
+    box_size = box_size_initial - current_gen // 100
     return geo_crossover_fixed_box(parent_first=parent_first, parent_second=parent_second, box_size=box_size, **kwargs)
 
 
 def increasing_dynamic_geo_crossover(parent_first, parent_second, box_size_initial, current_gen, **kwargs):
-    box_size = box_size_initial + current_gen // 600
+    box_size = box_size_initial + current_gen // 100
     return geo_crossover_fixed_box(parent_first=parent_first, parent_second=parent_second, box_size=box_size, **kwargs)

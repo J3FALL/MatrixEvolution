@@ -27,7 +27,7 @@ def evolution_only_u_component(source_matrix, crossover):
                      'mutation': partial(mutated_individ_only_u, mutate=mutation),
                      'crossover': partial(separate_crossover_only_u, crossover=crossover),
                      'initial_population': init_population}
-    meta_params = {'pop_size': 100, 'generations': 100, 'bound_value': 1.0,
+    meta_params = {'pop_size': 100, 'generations': 1000, 'bound_value': 1.0,
                    'selection_rate': 0.1, 'crossover_rate': 0.70, 'random_selection_rate': 0.2, 'mutation_rate': 0.2}
 
     return evo_operators, meta_params
@@ -58,10 +58,10 @@ def evo_with_rotations(source_matrix, runs=10, crossover=partial(k_point_crossov
         print(u_baseline)
         print(np.abs(u_best - u_baseline))
 
-    # evo_history.fitness_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=15)
+    evo_history.fitness_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=15)
     storage.save_run(key=run_key, evo_history=evo_history)
 
 
 if __name__ == '__main__':
     source_matrix = np.random.rand(10, 10)
-    evo_with_rotations(source_matrix=source_matrix)
+    evo_with_rotations(source_matrix=source_matrix, runs=5)
