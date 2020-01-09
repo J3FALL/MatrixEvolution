@@ -4,9 +4,9 @@ import numpy as np
 
 from evo_operators import (
     k_point_crossover,
-    decreasing_dynamic_geo_crossover,
-    geo_crossover_fixed_box,
-    increasing_dynamic_geo_crossover
+    increasing_dynamic_geo_crossover,
+    fitness_frob_norm_only_u,
+    fitness_combined_norm_only_u
 )
 from evo_storage import EvoStorage
 from init_randomly import evo_random
@@ -19,24 +19,22 @@ def comparison_plot(run_key_first, run_key_second):
     run_first = storage.run_by_key(key=run_key_first)
     run_second = storage.run_by_key(key=run_key_second)
 
-    joint_convergence_boxplots(history_runs=[run_first, run_second], values_to_plot='min', gens_ticks=150)
+    joint_convergence_boxplots(history_runs=[run_first, run_second], values_to_plot='normed_min', gens_ticks=25)
 
 
-def evo_random_vs_rotations():
+def compare_methods():
     source_matrix = np.random.rand(10, 10)
     k_point = partial(k_point_crossover, type='random', k=4)
-    geo_fixed = partial(geo_crossover_fixed_box, box_size=3)
     runs = 10
-    dynamic_crossover = partial(decreasing_dynamic_geo_crossover, box_size_initial=5)
-    evo_random(source_matrix=source_matrix, runs=runs, crossover=dynamic_crossover,
-               run_key='dynamic_direct')
-    reversed_dynamic_crossover = partial(increasing_dynamic_geo_crossover, box_size_initial=1)
-    evo_random(source_matrix=source_matrix, runs=runs, crossover=reversed_dynamic_crossover,
-               run_key='dynamic_reversed',
+    inc_dynamic_geo_crossover = partial(increasing_dynamic_geo_crossover, box_size_initial=1)
+    evo_random(source_matrix=source_matrix, runs=runs, crossover=inc_dynamic_geo_crossover,
+               fitness=fitness_frob_norm_only_u, run_key='dynamic_normed_frob')
+    evo_random(source_matrix=source_matrix, runs=runs, crossover=inc_dynamic_geo_crossover,
+               fitness=fitness_combined_norm_only_u, run_key='dynamic_normed_2+frob',
                storage_path='history.db')
 
-    comparison_plot(run_key_first='dynamic_direct', run_key_second='dynamic_reversed')
+    comparison_plot(run_key_first='dynamic_normed_frob', run_key_second='dynamic_normed_2+frob')
 
 
 if __name__ == '__main__':
-    evo_random_vs_rotations()
+    compare_methods()

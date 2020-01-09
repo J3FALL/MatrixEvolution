@@ -1,3 +1,4 @@
+import math
 import random
 from operator import attrgetter
 
@@ -33,12 +34,45 @@ def fitness_frob_norm_only_u(source_matrix, svd):
     return norm
 
 
+def fitness_eigen_values_norm(source_matrix, svd):
+    u_base, _, _ = np.linalg.svd(source_matrix, full_matrices=True)
+    u_target, _, _ = svd
+    eigen_values = np.linalg.eig(u_target - u_base)[0]
+    norm = np.linalg.norm(eigen_values)
+    return norm
+
+
 def fitness_inf_norm_only_u(source_matrix, svd):
     u_base, _, _ = np.linalg.svd(source_matrix, full_matrices=True)
     u_target, _, _ = svd
     inf_metric = np.linalg.norm(u_target - u_base, ord=np.inf)
 
     return inf_metric
+
+
+def fitness_nuclear_norm_only_u(source_matrix, svd):
+    u_base, _, _ = np.linalg.svd(source_matrix, full_matrices=True)
+    u_target, _, _ = svd
+    nuclear_norm = np.linalg.norm(u_target - u_base, ord=2)
+
+    return nuclear_norm
+
+
+def fitness_2_norm_only_u(source_matrix, svd):
+    u_base, _, _ = np.linalg.svd(source_matrix, full_matrices=True)
+    u_target, _, _ = svd
+    norm_2 = np.linalg.norm(u_target - u_base, ord=2)
+
+    return norm_2
+
+
+def fitness_combined_norm_only_u(source_matrix, svd):
+    u_base, _, _ = np.linalg.svd(source_matrix, full_matrices=True)
+    u_target, _, _ = svd
+    norm_2 = np.linalg.norm(u_target - u_base, ord=2)
+    frob = np.linalg.norm(u_target - u_base)
+
+    return frob + norm_2
 
 
 def new_individ_random_svd(source_matrix, bound_value=10.0):
@@ -357,9 +391,12 @@ def separate_crossover(parent_first, parent_second):
 def mutation_gauss(candidate, mu, sigma, prob_global):
     source_shape = candidate.shape
     resulted = np.ndarray.flatten(candidate)
-    for idx in range(len(resulted)):
-        if np.random.random() < prob_global:
-            resulted[idx] = np.random.normal(mu, sigma)
+
+    chosen_values_amount = math.ceil(prob_global * len(resulted))
+    idx_to_mutate = np.random.choice(np.arange(0, len(resulted)), chosen_values_amount)
+    for idx in idx_to_mutate:
+        resulted[idx] = np.random.normal(mu, sigma)
+
     return resulted.reshape(source_shape)
 
 

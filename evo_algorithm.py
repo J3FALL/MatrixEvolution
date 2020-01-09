@@ -114,7 +114,6 @@ class BasicEvoStrategy:
         u_norm, s_norm, vh_norm = svd_frob_norm(best_candidate=best_candidate.genotype, matrix=self.source_matrix)
         _, s, _ = np.linalg.svd(self.source_matrix, full_matrices=True)
         min_normed_fitness = best_candidate.fitness_value / self.__first_min_fitness
-
         self.history.new_generation(avg_fitness=np.average(fitness), min_fitness_in_pop=np.min(fitness),
                                     normed_min_fitness=min_normed_fitness,
                                     u_norm=u_norm, s_norm=s_norm, vh_norm=vh_norm)
