@@ -1,6 +1,7 @@
 import math
 
 import numpy as np
+from pytest import raises
 
 from evo_operators import (
     fitness_frob_norm,
@@ -11,7 +12,9 @@ from evo_operators import (
     k_point_crossover,
     initial_pop_flat_lhs_only_u,
     initial_population_only_u_rotations,
-    geo_crossover
+    geo_crossover,
+    quadrant_position,
+    initial_pop_only_u_fixed_quadrant
 )
 
 
@@ -145,3 +148,44 @@ def test_mutation_gauss_probability_correct():
     expected_mutations = math.ceil(prob_global * matrix_size[0] * matrix_size[1])
     actual_mutations = (diff_matrix > 0.0).sum()
     assert expected_mutations == actual_mutations
+
+
+def test_quadrant_position_correct():
+    matrix_shape = (10, 10)
+    quadrant_idx = 3
+    expected_quadrant_position = (0, 5, 5, -1)
+
+    actual_quadrant_position = quadrant_position(matrix_shape=matrix_shape, quadrant_idx=quadrant_idx)
+
+    assert expected_quadrant_position == actual_quadrant_position
+
+
+def test_quadrant_position_exception():
+    matrix_shape = (10, 10)
+    invalid_quadrant_idx = -1
+
+    with raises(Exception) as exc:
+        assert quadrant_position(matrix_shape=matrix_shape, quadrant_idx=invalid_quadrant_idx)
+
+    assert str(exc.value) == f'Unexpected quadrant_idx = {invalid_quadrant_idx}'
+
+
+def test_initial_pop_only_u_fixed_quadrant_correct():
+    matrix_size = (10, 10)
+    source_matrix = random_matrix(matrix_size=matrix_size)
+    u_base, _, _ = np.linalg.svd(source_matrix, full_matrices=True)
+
+    pop_size = 10
+    quadrant_idx = 2
+    i_from, i_to, j_from, j_to = quadrant_position(matrix_shape=matrix_size,
+                                                   quadrant_idx=quadrant_idx)
+
+    pop = initial_pop_only_u_fixed_quadrant(pop_size=pop_size,
+                                            source_matrix=source_matrix,
+                                            quadrant_idx=quadrant_idx)
+
+    generated_u = pop[0].genotype[0]
+    diff = np.abs(generated_u - u_base)
+    zero_quadrant = np.zeros((matrix_size[0] // 2, matrix_size[1] // 2))
+    actual_quadrant = diff[i_from:i_to, j_from:j_to]
+    assert not np.array_equal(actual_quadrant, zero_quadrant)

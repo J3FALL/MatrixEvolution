@@ -15,7 +15,9 @@ def init_pop_randomly():
     source_matrix = np.random.rand(20, 20)
     pop_size = 100
 
-    pop = initial_population_only_u_random(pop_size=pop_size, source_matrix=source_matrix, bound_value=1.1)
+    pop = initial_population_only_u_random(pop_size=pop_size,
+                                           source_matrix=source_matrix,
+                                           bound_value=1.1)
 
     u_values = [individ.genotype[0] for individ in pop]
 
@@ -29,8 +31,11 @@ def init_pop_with_rotation():
     pop_size, radius_range = 50, (0.1, 3.0)
     radius_ticks, axis = 5, (4, 5)
 
-    pop = initial_population_only_u_rotations(pop_size=pop_size, source_matrix=source_matrix, radius_range=radius_range,
-                                              radius_ticks=radius_ticks, axis=axis)
+    pop = initial_population_only_u_rotations(pop_size=pop_size,
+                                              source_matrix=source_matrix,
+                                              radius_range=radius_range,
+                                              radius_ticks=radius_ticks,
+                                              axis=axis)
 
     u_values = [individ.genotype[0] for individ in pop]
 

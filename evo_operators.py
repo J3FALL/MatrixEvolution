@@ -12,6 +12,8 @@ from matrix_generator import (
 )
 
 
+# TODO: script is too heavy, new package with operators as separate scripts is required
+
 def fitness_frob_norm(source_matrix, svd):
     u, s, vh = svd
     target = __matrix_from_svd(u=u, s=s, vh=vh)
@@ -122,6 +124,35 @@ def initial_population_only_u_random(pop_size, source_matrix, bound_value=10.0):
         pop.append(MatrixIndivid(genotype=(u, s_base, vh_base)))
 
     return pop
+
+
+def initial_pop_only_u_fixed_quadrant(pop_size, source_matrix, bound_value=10.0, quadrant_idx=1):
+    u_base, s_base, vh_base = np.linalg.svd(source_matrix, full_matrices=True)
+    size = source_matrix.shape
+
+    pop = []
+    for _ in range(pop_size):
+        random_u = random_matrix(size, bound_value=bound_value)
+        i_from, i_to, j_from, j_to = quadrant_position(matrix_shape=size, quadrant_idx=quadrant_idx)
+        modified_u = u_base
+        modified_u[i_from:i_to, j_from:j_to] = random_u[i_from:i_to, j_from:j_to]
+        pop.append(MatrixIndivid(genotype=(modified_u, s_base, vh_base)))
+
+    return pop
+
+
+def quadrant_position(matrix_shape, quadrant_idx):
+    quadrant_functions = {
+        1: lambda idx: (matrix_shape[0] // 2, -1, 0, matrix_shape[1] // 2),
+        2: lambda idx: (0, matrix_shape[0] // 2, 0, matrix_shape[1] // 2),
+        3: lambda idx: (0, matrix_shape[0] // 2, matrix_shape[1] // 2, -1),
+        4: lambda idx: (matrix_shape[0] // 2, -1, matrix_shape[1] // 2, -1)
+    }
+
+    if quadrant_idx not in quadrant_functions.keys():
+        raise Exception(f'Unexpected quadrant_idx = {quadrant_idx}')
+
+    return quadrant_functions[quadrant_idx](quadrant_idx)
 
 
 def initial_pop_flat_lhs_only_u(pop_size, source_matrix, bound_value):
@@ -393,11 +424,24 @@ def mutation_gauss(candidate, mu, sigma, prob_global):
     resulted = np.ndarray.flatten(candidate)
 
     chosen_values_amount = math.ceil(prob_global * len(resulted))
-    idx_to_mutate = np.random.choice(np.arange(0, len(resulted)), chosen_values_amount)
+    idx_to_mutate = np.random.choice(np.arange(0, len(resulted)), chosen_values_amount, replace=False)
     for idx in idx_to_mutate:
         resulted[idx] = np.random.normal(mu, sigma)
 
     return resulted.reshape(source_shape)
+
+
+def mutation_quadrant_gauss(candidate, quadrant_idx, mu, sigma, prob_global):
+    i_from, i_to, j_from, j_to = quadrant_position(matrix_shape=candidate.shape,
+                                                   quadrant_idx=quadrant_idx)
+
+    quad_candidate_first = candidate[i_from:i_to, j_from:j_to]
+    mutated_quad = mutation_gauss(quad_candidate_first,
+                                  mu, sigma, prob_global)
+    resulted = np.copy(candidate)
+    resulted[i_from:i_to, j_from:j_to] = mutated_quad
+
+    return resulted
 
 
 def select_k_best(candidates, k):
@@ -463,3 +507,25 @@ def decreasing_dynamic_geo_crossover(parent_first, parent_second, box_size_initi
 def increasing_dynamic_geo_crossover(parent_first, parent_second, box_size_initial, current_gen, **kwargs):
     box_size = box_size_initial + current_gen // 100
     return geo_crossover_fixed_box(parent_first=parent_first, parent_second=parent_second, box_size=box_size, **kwargs)
+
+
+def quadrant_increasing_dynamic_geo_crossover(parent_first, parent_second,
+                                              box_size_initial, current_gen,
+                                              quadrant_idx, **kwargs):
+    i_from, i_to, j_from, j_to = quadrant_position(matrix_shape=parent_first.shape,
+                                                   quadrant_idx=quadrant_idx)
+
+    quad_parent_first = parent_first[i_from:i_to, j_from:j_to]
+    quad_parent_second = parent_second[i_from:i_to, j_from:j_to]
+
+    box_size = box_size_initial + current_gen // 300
+    quad_child_first, quad_child_second = geo_crossover_fixed_box(parent_first=quad_parent_first,
+                                                                  parent_second=quad_parent_second,
+                                                                  box_size=box_size, **kwargs)
+
+    child_first, child_second = np.copy(parent_first), np.copy(parent_second)
+
+    child_first[i_from:i_to, j_from:j_to] = quad_child_first
+    child_second[i_from:i_to, j_from:j_to] = quad_child_second
+
+    return child_first, child_second
