@@ -1,3 +1,4 @@
+import math
 import random
 from operator import attrgetter
 
@@ -10,6 +11,8 @@ from matrix_generator import (
     initial_diagonal_minimized
 )
 
+
+# TODO: script is too heavy, new package with operators as separate scripts is required
 
 def fitness_frob_norm(source_matrix, svd):
     u, s, vh = svd
@@ -29,7 +32,49 @@ def fitness_s_component_diff(source_matrix, svd):
 def fitness_frob_norm_only_u(source_matrix, svd):
     u_base, _, _ = np.linalg.svd(source_matrix, full_matrices=True)
     u_target, _, _ = svd
-    return np.linalg.norm(u_target - u_base)
+    norm = np.linalg.norm(u_target - u_base)
+    return norm
+
+
+def fitness_eigen_values_norm(source_matrix, svd):
+    u_base, _, _ = np.linalg.svd(source_matrix, full_matrices=True)
+    u_target, _, _ = svd
+    eigen_values = np.linalg.eig(u_target - u_base)[0]
+    norm = np.linalg.norm(eigen_values)
+    return norm
+
+
+def fitness_inf_norm_only_u(source_matrix, svd):
+    u_base, _, _ = np.linalg.svd(source_matrix, full_matrices=True)
+    u_target, _, _ = svd
+    inf_metric = np.linalg.norm(u_target - u_base, ord=np.inf)
+
+    return inf_metric
+
+
+def fitness_nuclear_norm_only_u(source_matrix, svd):
+    u_base, _, _ = np.linalg.svd(source_matrix, full_matrices=True)
+    u_target, _, _ = svd
+    nuclear_norm = np.linalg.norm(u_target - u_base, ord=2)
+
+    return nuclear_norm
+
+
+def fitness_2_norm_only_u(source_matrix, svd):
+    u_base, _, _ = np.linalg.svd(source_matrix, full_matrices=True)
+    u_target, _, _ = svd
+    norm_2 = np.linalg.norm(u_target - u_base, ord=2)
+
+    return norm_2
+
+
+def fitness_combined_norm_only_u(source_matrix, svd):
+    u_base, _, _ = np.linalg.svd(source_matrix, full_matrices=True)
+    u_target, _, _ = svd
+    norm_2 = np.linalg.norm(u_target - u_base, ord=2)
+    frob = np.linalg.norm(u_target - u_base)
+
+    return frob + norm_2
 
 
 def new_individ_random_svd(source_matrix, bound_value=10.0):
@@ -79,6 +124,35 @@ def initial_population_only_u_random(pop_size, source_matrix, bound_value=10.0):
         pop.append(MatrixIndivid(genotype=(u, s_base, vh_base)))
 
     return pop
+
+
+def initial_pop_only_u_fixed_quadrant(pop_size, source_matrix, bound_value=10.0, quadrant_idx=1):
+    u_base, s_base, vh_base = np.linalg.svd(source_matrix, full_matrices=True)
+    size = source_matrix.shape
+
+    pop = []
+    for _ in range(pop_size):
+        random_u = random_matrix(size, bound_value=bound_value)
+        i_from, i_to, j_from, j_to = quadrant_position(matrix_shape=size, quadrant_idx=quadrant_idx)
+        modified_u = u_base
+        modified_u[i_from:i_to, j_from:j_to] = random_u[i_from:i_to, j_from:j_to]
+        pop.append(MatrixIndivid(genotype=(modified_u, s_base, vh_base)))
+
+    return pop
+
+
+def quadrant_position(matrix_shape, quadrant_idx):
+    quadrant_functions = {
+        1: lambda idx: (matrix_shape[0] // 2, -1, 0, matrix_shape[1] // 2),
+        2: lambda idx: (0, matrix_shape[0] // 2, 0, matrix_shape[1] // 2),
+        3: lambda idx: (0, matrix_shape[0] // 2, matrix_shape[1] // 2, -1),
+        4: lambda idx: (matrix_shape[0] // 2, -1, matrix_shape[1] // 2, -1)
+    }
+
+    if quadrant_idx not in quadrant_functions.keys():
+        raise Exception(f'Unexpected quadrant_idx = {quadrant_idx}')
+
+    return quadrant_functions[quadrant_idx](quadrant_idx)
 
 
 def initial_pop_flat_lhs_only_u(pop_size, source_matrix, bound_value):
@@ -149,8 +223,8 @@ def separate_crossover_only_s(parent_first: MatrixIndivid, parent_second: Matrix
     return child_first, child_second
 
 
-def separate_crossover_only_u(parent_first: MatrixIndivid, parent_second: MatrixIndivid, crossover):
-    u_first, u_second = crossover(parent_first.genotype[0], parent_second.genotype[0])
+def separate_crossover_only_u(parent_first: MatrixIndivid, parent_second: MatrixIndivid, crossover, **kwargs):
+    u_first, u_second = crossover(parent_first.genotype[0], parent_second.genotype[0], **kwargs)
 
     s_first, s_second = parent_first.genotype[1], parent_second.genotype[1]
 
@@ -224,7 +298,7 @@ def two_point_crossover(parent_first, parent_second, type='horizontal'):
     return child_first, child_second
 
 
-def k_point_crossover(parent_first, parent_second, type='horizontal', k=3):
+def k_point_crossover(parent_first, parent_second, type='horizontal', k=3, **kwargs):
     size = parent_first.shape
     child_first, child_second = np.zeros(size), np.zeros(size)
 
@@ -256,6 +330,28 @@ def k_point_crossover(parent_first, parent_second, type='horizontal', k=3):
             child_second[:, point_from:point_to] = parents[(parent_idx + 1) % 2][:, point_from:point_to]
 
             parent_idx = (parent_idx + 1) % 2
+
+    return child_first, child_second
+
+
+def geo_crossover(parent_first, parent_second, random_box=True, **kwargs):
+    size = parent_first.shape
+
+    if random_box:
+        top_left = (np.random.randint(low=0, high=size[0]),
+                    np.random.randint(low=0, high=size[1]))
+        box_size = np.random.randint(low=0, high=size[0])
+        bottom_right = (top_left[0] + box_size, top_left[1] + box_size)
+    else:
+        box_size = kwargs['box_size']
+        top_left = kwargs['top_left']
+        bottom_right = (top_left[0] + box_size, top_left[1] + box_size)
+
+    inside_mask = np.zeros(size)
+    inside_mask[top_left[0]:bottom_right[0], top_left[1]:bottom_right[1]] = 1.0
+
+    child_first = inside_mask * parent_first + (1.0 - inside_mask) * parent_second
+    child_second = inside_mask * parent_second + (1.0 - inside_mask) * parent_first
 
     return child_first, child_second
 
@@ -326,10 +422,26 @@ def separate_crossover(parent_first, parent_second):
 def mutation_gauss(candidate, mu, sigma, prob_global):
     source_shape = candidate.shape
     resulted = np.ndarray.flatten(candidate)
-    for idx in range(len(resulted)):
-        if np.random.random() < prob_global:
-            resulted[idx] = np.random.normal(mu, sigma)
+
+    chosen_values_amount = math.ceil(prob_global * len(resulted))
+    idx_to_mutate = np.random.choice(np.arange(0, len(resulted)), chosen_values_amount, replace=False)
+    for idx in idx_to_mutate:
+        resulted[idx] = np.random.normal(mu, sigma)
+
     return resulted.reshape(source_shape)
+
+
+def mutation_quadrant_gauss(candidate, quadrant_idx, mu, sigma, prob_global):
+    i_from, i_to, j_from, j_to = quadrant_position(matrix_shape=candidate.shape,
+                                                   quadrant_idx=quadrant_idx)
+
+    quad_candidate_first = candidate[i_from:i_to, j_from:j_to]
+    mutated_quad = mutation_gauss(quad_candidate_first,
+                                  mu, sigma, prob_global)
+    resulted = np.copy(candidate)
+    resulted[i_from:i_to, j_from:j_to] = mutated_quad
+
+    return resulted
 
 
 def select_k_best(candidates, k):
@@ -374,3 +486,46 @@ def random_matrix(matrix_size, bound_value=1.0):
 
 def __matrix_from_svd(u, s, vh):
     return np.dot(u * s, vh)
+
+
+def geo_crossover_fixed_box(parent_first, parent_second, box_size, **kwargs):
+    size = parent_first.shape
+    top_left = np.random.randint(low=0, high=size[0]), np.random.randint(low=0, high=size[1])
+
+    child_first, child_second = geo_crossover(parent_first=parent_first, parent_second=parent_second, random_box=False,
+                                              top_left=top_left, box_size=box_size)
+
+    return child_first, child_second
+
+
+# TODO: change box_size to be adaptive to total_generations
+def decreasing_dynamic_geo_crossover(parent_first, parent_second, box_size_initial, current_gen, **kwargs):
+    box_size = box_size_initial - current_gen // 100
+    return geo_crossover_fixed_box(parent_first=parent_first, parent_second=parent_second, box_size=box_size, **kwargs)
+
+
+def increasing_dynamic_geo_crossover(parent_first, parent_second, box_size_initial, current_gen, **kwargs):
+    box_size = box_size_initial + current_gen // 100
+    return geo_crossover_fixed_box(parent_first=parent_first, parent_second=parent_second, box_size=box_size, **kwargs)
+
+
+def quadrant_increasing_dynamic_geo_crossover(parent_first, parent_second,
+                                              box_size_initial, current_gen,
+                                              quadrant_idx, **kwargs):
+    i_from, i_to, j_from, j_to = quadrant_position(matrix_shape=parent_first.shape,
+                                                   quadrant_idx=quadrant_idx)
+
+    quad_parent_first = parent_first[i_from:i_to, j_from:j_to]
+    quad_parent_second = parent_second[i_from:i_to, j_from:j_to]
+
+    box_size = box_size_initial + current_gen // 300
+    quad_child_first, quad_child_second = geo_crossover_fixed_box(parent_first=quad_parent_first,
+                                                                  parent_second=quad_parent_second,
+                                                                  box_size=box_size, **kwargs)
+
+    child_first, child_second = np.copy(parent_first), np.copy(parent_second)
+
+    child_first[i_from:i_to, j_from:j_to] = quad_child_first
+    child_second[i_from:i_to, j_from:j_to] = quad_child_second
+
+    return child_first, child_second

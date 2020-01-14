@@ -14,12 +14,16 @@ from evo_operators import (
     separate_crossover_only_s,
     initial_population_from_lhs_only_s,
     initial_population_only_u_random,
-    fitness_frob_norm_only_u,
     mutated_individ_only_u,
     separate_crossover_only_u,
-    mutated_individ_only_s
+    mutated_individ_only_s,
+    decreasing_dynamic_geo_crossover,
+    increasing_dynamic_geo_crossover,
+    fitness_frob_norm_only_u,
+    fitness_eigen_values_norm
 )
 from evo_storage import EvoStorage
+from viz import components_comparison
 
 
 def compare_results(matrix, evo_results):
@@ -61,42 +65,60 @@ def evo_only_s_configurations():
     return source_matrix, evo_operators, meta_params
 
 
-def evolution_only_u_component(source_matrix):
+def evolution_only_u_component(source_matrix, crossover, fitness):
     mutation = partial(mutation_gauss, mu=0, sigma=0.3, prob_global=0.05)
-    crossover = partial(k_point_crossover, type='random', k=4)
-    init_population = partial(initial_population_only_u_random, source_matrix=source_matrix, bound_value=1.0)
-    evo_operators = {'fitness': fitness_frob_norm_only_u,
+    init_population = partial(initial_population_only_u_random, source_matrix=source_matrix, bound_value=0.5)
+    evo_operators = {'fitness': fitness,
                      'parent_selection': partial(select_by_tournament, tournament_size=20),
                      'mutation': partial(mutated_individ_only_u, mutate=mutation),
                      'crossover': partial(separate_crossover_only_u, crossover=crossover),
                      'initial_population': init_population}
-    meta_params = {'pop_size': 100, 'generations': 50, 'bound_value': 1.0,
-                   'selection_rate': 0.2, 'crossover_rate': 0.80, 'random_selection_rate': 0.0, 'mutation_rate': 0.2}
+    meta_params = {'pop_size': 100, 'generations': 500, 'bound_value': 0.5,
+                   'selection_rate': 0.2, 'crossover_rate': 0.60, 'random_selection_rate': 0.2, 'mutation_rate': 0.1}
 
     return evo_operators, meta_params
 
 
-def evo_random(source_matrix):
-    storage = EvoStorage(dump_file_path='history.db')
-    evo_operators, meta_params = evolution_only_u_component(source_matrix=source_matrix)
-    evo_history = EvoHistory(description='Random')
+def evo_random(source_matrix, runs=10, crossover=partial(k_point_crossover, type='random', k=4),
+               fitness=fitness_frob_norm_only_u, **kwargs):
+    if 'storage_path' in kwargs:
+        storage = EvoStorage(dump_file_path=kwargs['storage_path'], from_file=kwargs['storage_path'])
+    else:
+        storage = EvoStorage(dump_file_path='history.db')
 
-    for run_id in range(30):
+    run_key = 'with_rot'
+    if 'run_key' in kwargs:
+        run_key = kwargs['run_key']
+
+    evo_operators, meta_params = evolution_only_u_component(source_matrix=source_matrix, crossover=crossover,
+                                                            fitness=fitness)
+    evo_history = EvoHistory(description=run_key)
+
+    for run_id in range(runs):
         print(f'run_id: {run_id}')
         evo_strategy = BasicEvoStrategy(evo_operators=evo_operators, meta_params=meta_params,
                                         history=evo_history, source_matrix=source_matrix)
         evo_strategy.run()
         best_solution = evo_strategy.graded_by_fitness()[0]
-        u_best = best_solution.genotype[0]
-        print(u_best)
-        u_baseline, _, _ = np.linalg.svd(source_matrix)
-        print(u_baseline)
-        print(np.abs(u_best - u_baseline))
+        worst_solution = evo_strategy.graded_by_fitness()[-1]
 
-    # evo_history.fitness_history_boxplots(values_to_plot='min', save_to_file=False, gens_ticks=1)
-    storage.save_run(key='random', evo_history=evo_history)
+        u_best = best_solution.genotype[0]
+        u_baseline, _, _ = np.linalg.svd(source_matrix)
+
+        print(f'F-norm: {np.linalg.norm(u_best - u_baseline)}')
+        print(f'Eigen values: {np.linalg.eig(u_baseline - u_best)[0]}')
+        components_comparison([best_solution.genotype[0], worst_solution.genotype[0],
+                               best_solution.genotype[0] - worst_solution.genotype[0],
+                               best_solution.genotype[0] - u_baseline])
+    evo_history.fitness_history_boxplots(values_to_plot='normed_min', save_to_file=False, gens_ticks=25)
+    storage.save_run(key=run_key, evo_history=evo_history)
 
 
 if __name__ == '__main__':
-    source_matrix = np.random.rand(20, 20)
-    evo_random(source_matrix=source_matrix)
+    source_matrix = np.random.rand(10, 10)
+    dynamic_crossover = partial(decreasing_dynamic_geo_crossover, box_size_initial=5)
+    reversed_dynamic_crossover = partial(increasing_dynamic_geo_crossover, box_size_initial=1)
+    k_point = partial(k_point_crossover, k=4)
+    # crossover = partial(geo_crossover_fixed_box, box_size=4)
+    eig_fitness = fitness_eigen_values_norm
+    evo_random(source_matrix=source_matrix, crossover=reversed_dynamic_crossover, fitness=eig_fitness, runs=5)

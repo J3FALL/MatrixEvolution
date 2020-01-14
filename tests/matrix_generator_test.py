@@ -14,21 +14,24 @@ from matrix_generator import (
 def test_initial_diag_matrix_correct():
     matrix_size, norm_value = 10, 0.5
 
-    matrix = initial_diag_matrix(matrix_size=matrix_size, range_value=norm_value)
+    matrix = initial_diag_matrix(matrix_size=matrix_size,
+                                 range_value=norm_value)
 
     assert matrix.shape == (matrix_size, matrix_size)
 
 
 def test_initial_diagonal_by_prime_fraction_correct():
     diag_size, norm_value = 2, 10
-    resulted_matrix = initial_diagonal_scaled(size=diag_size, range_value=norm_value)
+    resulted_matrix = initial_diagonal_scaled(size=diag_size,
+                                              range_value=norm_value)
 
     assert resulted_matrix.shape == (diag_size,)
 
 
 def test_initial_diagonal_frac_part_correct():
     diag_size, norm_value = 10, 10
-    resulted_matrix = initial_diagonal_scaled(size=diag_size, range_value=norm_value)
+    resulted_matrix = initial_diagonal_scaled(size=diag_size,
+                                              range_value=norm_value)
 
     assert resulted_matrix.shape == (diag_size,)
 
