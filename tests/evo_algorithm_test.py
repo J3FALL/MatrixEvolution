@@ -1,8 +1,6 @@
 import numpy as np
 
-from evo_operators import (
-    initial_population_from_lhs_only_s
-)
+from evo.operators.init_population import initial_population_from_lhs_only_s
 
 
 # TODO: fix this test
@@ -21,7 +19,9 @@ from evo_operators import (
 def test_initial_population_from_lhs_only_s_correct():
     matrix = np.random.rand(10, 10)
     samples_total = 50
-    samples = initial_population_from_lhs_only_s(samples_amount=samples_total, vector_size=matrix.shape[0],
-                                                 values_range=10, source_matrix=matrix)
+    samples = initial_population_from_lhs_only_s(samples_amount=samples_total,
+                                                 vector_size=matrix.shape[0],
+                                                 values_range=10,
+                                                 source_matrix=matrix)
 
     assert len(samples) == samples_total

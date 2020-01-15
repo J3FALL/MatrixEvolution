@@ -2,19 +2,20 @@ from functools import partial
 
 import numpy as np
 
+from evo.operators.crossover import (
+    quadrant_increasing_dynamic_geo_crossover,
+    separate_crossover_only_u,
+)
+from evo.operators.fitness import fitness_svd_frob_norm_only_u
+from evo.operators.init_population import initial_pop_only_u_fixed_quadrant
+from evo.operators.mutation import (
+    mutated_individ_only_u,
+    mutation_quadrant_gauss
+)
+from evo.operators.selection import select_by_tournament
 from evo_algorithm import (
     BasicEvoStrategy,
     EvoHistory
-)
-from evo_operators import (
-    quadrant_increasing_dynamic_geo_crossover,
-    initial_pop_only_u_fixed_quadrant,
-    mutated_individ_only_u,
-    select_by_tournament,
-    separate_crossover_only_u,
-    fitness_frob_norm_only_u,
-    mutation_quadrant_gauss
-
 )
 from evo_storage import EvoStorage
 from viz import components_comparison
@@ -81,6 +82,6 @@ if __name__ == '__main__':
     quadrant_idx = 2
     crossover = partial(quadrant_increasing_dynamic_geo_crossover,
                         box_size_initial=1, quadrant_idx=quadrant_idx)
-    eig_fitness = fitness_frob_norm_only_u
+    eig_fitness = fitness_svd_frob_norm_only_u
     run_evolution(source_matrix=source_matrix, crossover=crossover,
                   fitness=eig_fitness, runs=1, quadrant_idx=quadrant_idx)

@@ -2,18 +2,20 @@ from functools import partial
 
 import numpy as np
 
+from evo.operators.crossover import (
+    k_point_crossover,
+    separate_crossover_only_u,
+)
+from evo.operators.fitness import fitness_svd_frob_norm_only_u
+from evo.operators.init_population import initial_population_only_u_rotations
+from evo.operators.mutation import (
+    mutation_gauss,
+    mutated_individ_only_u
+)
+from evo.operators.selection import select_by_tournament
 from evo_algorithm import (
     BasicEvoStrategy,
     EvoHistory
-)
-from evo_operators import (
-    select_by_tournament,
-    mutation_gauss,
-    k_point_crossover,
-    initial_population_only_u_rotations,
-    fitness_frob_norm_only_u,
-    mutated_individ_only_u,
-    separate_crossover_only_u,
 )
 from evo_storage import EvoStorage
 
@@ -22,7 +24,7 @@ def evolution_only_u_component(source_matrix, crossover):
     mutation = partial(mutation_gauss, mu=0, sigma=0.3, prob_global=0.05)
     init_population = partial(initial_population_only_u_rotations, source_matrix=source_matrix,
                               radius_range=(0.0, 2.0), radius_ticks=5, axis=(2, 3))
-    evo_operators = {'fitness': fitness_frob_norm_only_u,
+    evo_operators = {'fitness': fitness_svd_frob_norm_only_u,
                      'parent_selection': partial(select_by_tournament, tournament_size=20),
                      'mutation': partial(mutated_individ_only_u, mutate=mutation),
                      'crossover': partial(separate_crossover_only_u, crossover=crossover),

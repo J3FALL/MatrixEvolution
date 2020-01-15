@@ -5,9 +5,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 
-from evo_operators import (
-    select_k_best,
-)
+from evo.operators.selection import select_k_best
 
 
 class BasicEvoStrategy:
@@ -63,7 +61,8 @@ class BasicEvoStrategy:
 
     def __assign_fitness_values(self):
         for individ in self.pop:
-            individ.fitness_value = self.fitness(source_matrix=self.source_matrix, svd=individ.genotype)
+            individ.fitness_value = self.fitness(source_matrix=self.source_matrix,
+                                                 genotype=individ.genotype)
 
     def graded_by_fitness(self):
         self.__assign_fitness_values()

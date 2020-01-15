@@ -4,7 +4,7 @@ import numpy as np
 from scipy.optimize import (
     minimize)
 
-from evo_operators import (
+from evo.operators.init_population import (
     initial_population_only_u_random,
     initial_population_only_u_rotations
 )

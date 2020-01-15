@@ -2,25 +2,31 @@ from functools import partial
 
 import numpy as np
 
+from evo.operators.crossover import (
+    k_point_crossover,
+    separate_crossover_only_s,
+    separate_crossover_only_u,
+    decreasing_dynamic_geo_crossover,
+    increasing_dynamic_geo_crossover
+)
+from evo.operators.fitness import (
+    fitness_s_component_diff,
+    fitness_svd_eigen_values_norm,
+    fitness_svd_frob_norm_only_u
+)
+from evo.operators.init_population import (
+    initial_population_from_lhs_only_s,
+    initial_population_only_u_random
+)
+from evo.operators.mutation import (
+    mutation_gauss,
+    mutated_individ_only_u,
+    mutated_individ_only_s
+)
+from evo.operators.selection import select_by_tournament
 from evo_algorithm import (
     BasicEvoStrategy,
     EvoHistory
-)
-from evo_operators import (
-    fitness_s_component_diff,
-    select_by_tournament,
-    mutation_gauss,
-    k_point_crossover,
-    separate_crossover_only_s,
-    initial_population_from_lhs_only_s,
-    initial_population_only_u_random,
-    mutated_individ_only_u,
-    separate_crossover_only_u,
-    mutated_individ_only_s,
-    decreasing_dynamic_geo_crossover,
-    increasing_dynamic_geo_crossover,
-    fitness_frob_norm_only_u,
-    fitness_eigen_values_norm
 )
 from evo_storage import EvoStorage
 from viz import components_comparison
@@ -80,7 +86,7 @@ def evolution_only_u_component(source_matrix, crossover, fitness):
 
 
 def evo_random(source_matrix, runs=10, crossover=partial(k_point_crossover, type='random', k=4),
-               fitness=fitness_frob_norm_only_u, **kwargs):
+               fitness=fitness_svd_frob_norm_only_u, **kwargs):
     if 'storage_path' in kwargs:
         storage = EvoStorage(dump_file_path=kwargs['storage_path'], from_file=kwargs['storage_path'])
     else:
@@ -120,5 +126,5 @@ if __name__ == '__main__':
     reversed_dynamic_crossover = partial(increasing_dynamic_geo_crossover, box_size_initial=1)
     k_point = partial(k_point_crossover, k=4)
     # crossover = partial(geo_crossover_fixed_box, box_size=4)
-    eig_fitness = fitness_eigen_values_norm
+    eig_fitness = fitness_svd_eigen_values_norm
     evo_random(source_matrix=source_matrix, crossover=reversed_dynamic_crossover, fitness=eig_fitness, runs=5)
