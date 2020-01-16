@@ -61,3 +61,11 @@ def mutation_quadrant_gauss(candidate, quadrant_idx, mu, sigma, prob_global):
     resulted[i_from:i_to, j_from:j_to] = mutated_quad
 
     return resulted
+
+
+def mutated_individ_inverse(source_individ: MatrixIndivid, mutate):
+    inv_matrix = source_individ.genotype
+    inv_mutated = mutate(candidate=inv_matrix)
+    resulted = MatrixIndivid(genotype=inv_mutated)
+
+    return resulted

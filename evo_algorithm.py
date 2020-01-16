@@ -108,6 +108,10 @@ class BasicEvoStrategy:
 
     # TODO: implement callbacks logic
     def __history_callback(self):
+        best_candidate = self.graded_by_fitness()[0]
+        min_normed_fitness = best_candidate.fitness_value / self.__first_min_fitness
+
+    def __svd_callback(self):
         fitness = [ind.fitness_value for ind in self.pop]
         best_candidate = self.graded_by_fitness()[0]
         u_norm, s_norm, vh_norm = svd_frob_norm(best_candidate=best_candidate.genotype, matrix=self.source_matrix)

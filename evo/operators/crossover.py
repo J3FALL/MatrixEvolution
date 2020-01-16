@@ -218,12 +218,12 @@ def geo_crossover_fixed_box(parent_first, parent_second, box_size, **kwargs):
 
 # TODO: change box_size to be adaptive to total_generations
 def decreasing_dynamic_geo_crossover(parent_first, parent_second, box_size_initial, current_gen, **kwargs):
-    box_size = box_size_initial - current_gen // 100
+    box_size = box_size_initial - current_gen // 200
     return geo_crossover_fixed_box(parent_first=parent_first, parent_second=parent_second, box_size=box_size, **kwargs)
 
 
 def increasing_dynamic_geo_crossover(parent_first, parent_second, box_size_initial, current_gen, **kwargs):
-    box_size = box_size_initial + current_gen // 100
+    box_size = box_size_initial + current_gen // 1000
     return geo_crossover_fixed_box(parent_first=parent_first, parent_second=parent_second, box_size=box_size, **kwargs)
 
 
@@ -245,5 +245,15 @@ def quadrant_increasing_dynamic_geo_crossover(parent_first, parent_second,
 
     child_first[i_from:i_to, j_from:j_to] = quad_child_first
     child_second[i_from:i_to, j_from:j_to] = quad_child_second
+
+    return child_first, child_second
+
+
+def crossover_inverse(parent_first: MatrixIndivid, parent_second: MatrixIndivid,
+                      crossover, **kwargs):
+    inv_first, inv_second = crossover(parent_first.genotype, parent_second.genotype,
+                                      **kwargs)
+    child_first = MatrixIndivid(genotype=inv_first)
+    child_second = MatrixIndivid(genotype=inv_second)
 
     return child_first, child_second

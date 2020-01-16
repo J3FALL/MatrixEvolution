@@ -66,3 +66,12 @@ def fitness_svd_combined_norm_only_u(source_matrix, genotype):
 
 def __matrix_from_svd(u, s, vh):
     return np.dot(u * s, vh)
+
+
+def fitness_inverse_matrix_frob_norm(source_matrix, genotype):
+    matrix_size = source_matrix.shape[0]
+    target_identity = np.dot(source_matrix, genotype)
+
+    frob = np.linalg.norm(np.identity(matrix_size) - target_identity)
+
+    return frob

@@ -110,3 +110,13 @@ def initial_population_only_u_rotations(pop_size, source_matrix, radius_range=(0
             pop.append(MatrixIndivid(genotype=(u_resulted, s_base, vh_base)))
 
     return pop
+
+
+def initial_population_inverse_random(pop_size, source_matrix, bound_value=10.0):
+    size = source_matrix.shape
+    pop = []
+    for _ in range(pop_size):
+        value = random_matrix(size, bound_value=bound_value)
+        pop.append(MatrixIndivid(genotype=value))
+
+    return pop
