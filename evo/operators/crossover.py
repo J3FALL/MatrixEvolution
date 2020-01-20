@@ -223,7 +223,7 @@ def decreasing_dynamic_geo_crossover(parent_first, parent_second, box_size_initi
 
 
 def increasing_dynamic_geo_crossover(parent_first, parent_second, box_size_initial, current_gen, **kwargs):
-    box_size = box_size_initial + current_gen // 1000
+    box_size = box_size_initial + current_gen // 200
     return geo_crossover_fixed_box(parent_first=parent_first, parent_second=parent_second, box_size=box_size, **kwargs)
 
 
@@ -255,5 +255,19 @@ def crossover_inverse(parent_first: MatrixIndivid, parent_second: MatrixIndivid,
                                       **kwargs)
     child_first = MatrixIndivid(genotype=inv_first)
     child_second = MatrixIndivid(genotype=inv_second)
+
+    return child_first, child_second
+
+
+def swap_crossover(parent_first, parent_second, rows_to_swap=2, **kwargs):
+    matrix_size = parent_first.shape[0]
+    rows_idxs = np.random.choice(np.arange(0, matrix_size), size=rows_to_swap,
+                                 replace=False)
+
+    child_first, child_second = np.copy(parent_first), np.copy(parent_second)
+
+    for idx in rows_idxs:
+        child_first[idx, :] = parent_second[idx, :]
+        child_second[idx, :] = parent_first[idx, :]
 
     return child_first, child_second

@@ -120,3 +120,11 @@ def initial_population_inverse_random(pop_size, source_matrix, bound_value=10.0)
         pop.append(MatrixIndivid(genotype=value))
 
     return pop
+
+
+def initial_population_inverse_external(pop_size, external_pop):
+    pop = []
+    for value_idx in range(pop_size):
+        value = external_pop[value_idx]
+        pop.append(MatrixIndivid(genotype=value))
+    return pop

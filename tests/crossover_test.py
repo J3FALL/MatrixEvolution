@@ -4,7 +4,8 @@ from evo.operators.crossover import (
     single_point_crossover,
     two_point_crossover,
     k_point_crossover,
-    geo_crossover
+    geo_crossover,
+    swap_crossover
 )
 from utils import random_matrix
 
@@ -64,3 +65,14 @@ def test_geo_crossover_fixed_box_correct():
     actual_box = child_first[top_left[0]:top_left[0] + box_size, top_left[1]: top_left[1] + box_size]
 
     assert np.array_equal(expected_box, actual_box)
+
+
+def test_swap_crossover():
+    shape = (10, 10)
+    parent_first, parent_second = np.zeros(shape), np.ones(shape)
+    rows_to_swap = 3
+    child_first, child_second = swap_crossover(parent_first=parent_first,
+                                               parent_second=parent_second,
+                                               rows_to_swap=rows_to_swap)
+
+    assert np.sum(child_first) == shape[0] * rows_to_swap
