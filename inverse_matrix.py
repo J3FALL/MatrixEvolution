@@ -5,7 +5,8 @@ import numpy as np
 from evo.operators.crossover import (
     crossover_inverse,
     swap_crossover,
-    increasing_dynamic_geo_crossover
+    increasing_dynamic_geo_crossover,
+    arithmetic_swap_crossover
 )
 from evo.operators.fitness import fitness_inverse_matrix_frob_norm
 from evo.operators.init_population import (
@@ -51,9 +52,9 @@ def evo_configuration(source_matrix):
                      'mutation': mutation,
                      'crossover': crossover,
                      'initial_population': init_population}
-    meta_params = {'pop_size': 100, 'generations': 1000, 'bound_value': 1.0,
-                   'selection_rate': 0.2, 'crossover_rate': 0.70,
-                   'random_selection_rate': 0.1, 'mutation_rate': 0.2}
+    meta_params = {'pop_size': 100, 'generations': 10000, 'bound_value': 1.0,
+                   'selection_rate': 0.3, 'crossover_rate': 0.70,
+                   'random_selection_rate': 0.0, 'mutation_rate': 0.2}
 
     return evo_operators, meta_params
 
@@ -63,6 +64,16 @@ def _evo_config_with_dynamic_crossover(source_matrix):
     dynamic_inner_crossover = partial(increasing_dynamic_geo_crossover,
                                       box_size_initial=1)
     crossover = partial(crossover_inverse, crossover=dynamic_inner_crossover)
+    operators['crossover'] = crossover
+
+    return operators, meta_params
+
+
+def _evo_config_with_arithmetic_swap_crossover(source_matrix):
+    operators, meta_params = evo_configuration(source_matrix=source_matrix)
+    arithmetic_swap = partial(arithmetic_swap_crossover,
+                              rows_to_swap=2, fraction=0.3)
+    crossover = partial(crossover_inverse, crossover=arithmetic_swap)
     operators['crossover'] = crossover
 
     return operators, meta_params
@@ -85,21 +96,21 @@ def compare_configurations():
     source_matrix = np.random.rand(10, 10)
     swap_operators, meta_params = evo_configuration(source_matrix=source_matrix)
 
-    dynamic_operators, _ = _evo_config_with_dynamic_crossover(source_matrix)
-
-    runs = 5
+    # dynamic_operators, _ = _evo_config_with_dynamic_crossover(source_matrix)
+    arith_swap_operators, _ = _evo_config_with_arithmetic_swap_crossover(source_matrix)
+    runs = 2
     history_swap = run_evolution(operators=swap_operators,
                                  meta_params=meta_params,
                                  source_matrix=source_matrix,
                                  runs=runs, description='swap')
 
-    history_dynamic = run_evolution(operators=dynamic_operators,
+    history_dynamic = run_evolution(operators=arith_swap_operators,
                                     meta_params=meta_params,
                                     source_matrix=source_matrix,
-                                    runs=runs, description='dynamic')
+                                    runs=runs, description='arith_swap')
 
     joint_convergence_boxplots(history_runs=[history_swap, history_dynamic],
-                               values_to_plot='min', gens_ticks=25)
+                               values_to_plot='min', gens_ticks=100)
 
 
 if __name__ == '__main__':

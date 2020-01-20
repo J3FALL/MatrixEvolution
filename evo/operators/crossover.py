@@ -271,3 +271,18 @@ def swap_crossover(parent_first, parent_second, rows_to_swap=2, **kwargs):
         child_second[idx, :] = parent_first[idx, :]
 
     return child_first, child_second
+
+
+def arithmetic_swap_crossover(parent_first, parent_second,
+                              rows_to_swap=2, fraction=0.3, **kwargs):
+    matrix_size = parent_first.shape[0]
+    rows_idxs = np.random.choice(np.arange(0, matrix_size), size=rows_to_swap,
+                                 replace=False)
+
+    child_first, child_second = np.copy(parent_first), np.copy(parent_second)
+
+    for idx in rows_idxs:
+        child_first[idx, :] = fraction * parent_first[idx, :] + (1.0 - fraction) * parent_second[idx, :]
+        child_second[idx, :] = (1.0 - fraction) * fraction * parent_first[idx, :] + fraction * parent_second[idx, :]
+
+    return child_first, child_second
