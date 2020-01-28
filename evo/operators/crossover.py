@@ -286,3 +286,39 @@ def arithmetic_swap_crossover(parent_first, parent_second,
         child_second[idx, :] = (1.0 - fraction) * fraction * parent_first[idx, :] + fraction * parent_second[idx, :]
 
     return child_first, child_second
+
+
+def aim_crossover(parent_first, parent_second, points_amount=3, **kwargs):
+    matrix_size = parent_first.shape[0]
+
+    points_x = np.random.choice(np.arange(0, matrix_size), size=points_amount,
+                                replace=False)
+    points_y = np.random.choice(np.arange(0, matrix_size), size=points_amount,
+                                replace=False)
+
+    aim_mask = np.zeros(shape=(matrix_size, matrix_size))
+
+    for x, y in zip(points_x, points_y):
+        cross_points = _point_with_neighbours(x, y)
+        cross_points = list(filter(lambda p: is_inside_matrix(p, matrix_size), cross_points))
+
+        for i, j in cross_points:
+            aim_mask[i, j] = 1.0
+
+    child_first = parent_first * aim_mask + (1.0 - aim_mask) * parent_second
+    child_second = parent_second * aim_mask + (1.0 - aim_mask) * parent_first
+
+    return child_first, child_second
+
+
+def _point_with_neighbours(point_x, point_y):
+    hood = [(point_x, point_y), (point_x, point_y - 1),
+            (point_x - 1, point_y), (point_x, point_y + 1),
+            (point_x + 1, point_y)]
+
+    return hood
+
+
+def is_inside_matrix(point, matrix_size):
+    is_inside = (0 <= point[0] < matrix_size) and (0 <= point[1] < matrix_size)
+    return is_inside

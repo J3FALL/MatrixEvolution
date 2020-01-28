@@ -5,6 +5,8 @@ from evo_algorithm import (
 from init_randomly import evolution_only_u_component
 from viz import joint_convergence_boxplots
 
+# TODO: update this script
+
 if __name__ == '__main__':
     source_matrix, evo_operators, meta_params = evolution_only_u_component()
     evo_history_first = EvoHistory(description='First')

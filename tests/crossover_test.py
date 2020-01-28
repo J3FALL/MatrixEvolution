@@ -5,7 +5,10 @@ from evo.operators.crossover import (
     two_point_crossover,
     k_point_crossover,
     geo_crossover,
-    swap_crossover
+    swap_crossover,
+    aim_crossover,
+    is_inside_matrix
+
 )
 from utils import random_matrix
 
@@ -76,3 +79,33 @@ def test_swap_crossover():
                                                rows_to_swap=rows_to_swap)
 
     assert np.sum(child_first) == shape[0] * rows_to_swap
+
+
+def test_aim_crossover():
+    shape = (10, 10)
+    parent_first, parent_second = np.zeros(shape), np.ones(shape)
+    points_amount = 3
+
+    child_first, child_second = aim_crossover(parent_first=parent_first,
+                                              parent_second=parent_second,
+                                              points_amount=points_amount)
+
+    assert np.array_equal(np.ones(shape=shape), child_first + child_second)
+
+
+def test_is_inside_matrix_correct():
+    matrix_size = 10
+    point = (3, 3)
+
+    is_inside = is_inside_matrix(point=point, matrix_size=matrix_size)
+
+    assert is_inside is True
+
+
+def test_is_inside_matrix_outside():
+    matrix_size = 10
+    point = (10, 3)
+
+    is_inside = is_inside_matrix(point=point, matrix_size=matrix_size)
+
+    assert is_inside is False
