@@ -1,10 +1,10 @@
-import os
-from operator import attrgetter
-
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import seaborn as sns
+from operator import attrgetter
 
+from evo.operators.fitness import fitness_inverse_matrix_frob_norm
 from evo.operators.selection import select_k_best
 
 
@@ -45,7 +45,9 @@ class BasicEvoStrategy:
             print(f'Best candidate with fitness: {top.fitness_value}')
             print(f'Best candidate with normed fitness: {normed_top}')
             print(f'Average fitness in population: {avg}')
-
+            norm = fitness_inverse_matrix_frob_norm(source_matrix=self.source_matrix,
+                                                    genotype=top.genotype)
+            print(f'A * A_inv: {norm}')
             offspring = self.__new_offspring()
 
             mutations_amount = int(len(offspring) * self.meta_params['mutation_rate'])
@@ -60,9 +62,11 @@ class BasicEvoStrategy:
         self.cur_gen = 0
 
     def __assign_fitness_values(self):
+        avg_individ = np.average(np.array([ind.genotype for ind in self.pop]))
         for individ in self.pop:
             individ.fitness_value = self.fitness(source_matrix=self.source_matrix,
-                                                 genotype=individ.genotype)
+                                                 genotype=individ.genotype,
+                                                 avg=avg_individ)
 
     def graded_by_fitness(self):
         self.__assign_fitness_values()

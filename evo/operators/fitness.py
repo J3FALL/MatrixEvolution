@@ -75,3 +75,14 @@ def fitness_inverse_matrix_frob_norm(source_matrix, genotype):
     frob = np.linalg.norm(np.identity(matrix_size) - target_identity)
 
     return frob
+
+
+def fitness_inverse_matrix_regularized_frob_norm(source_matrix, genotype, avg, alpha=0.1):
+    matrix_size = source_matrix.shape[0]
+    target_identity = np.dot(source_matrix, genotype)
+
+    frob = np.linalg.norm(np.identity(matrix_size) - target_identity)
+    reg = np.linalg.norm(alpha * np.identity(matrix_size) * (avg - genotype))
+    full = frob + reg
+
+    return full

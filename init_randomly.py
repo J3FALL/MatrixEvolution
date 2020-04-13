@@ -1,6 +1,5 @@
-from functools import partial
-
 import numpy as np
+from functools import partial
 
 from evo.operators.crossover import (
     k_point_crossover,
@@ -29,7 +28,6 @@ from evo_algorithm import (
     EvoHistory
 )
 from evo_storage import EvoStorage
-from viz import components_comparison
 
 
 def compare_results(matrix, evo_results):
@@ -113,9 +111,9 @@ def evo_random(source_matrix, runs=10, crossover=partial(k_point_crossover, type
 
         print(f'F-norm: {np.linalg.norm(u_best - u_baseline)}')
         print(f'Eigen values: {np.linalg.eig(u_baseline - u_best)[0]}')
-        components_comparison([best_solution.genotype[0], worst_solution.genotype[0],
-                               best_solution.genotype[0] - worst_solution.genotype[0],
-                               best_solution.genotype[0] - u_baseline])
+        # components_comparison([best_solution.genotype[0], worst_solution.genotype[0],
+        #                        best_solution.genotype[0] - worst_solution.genotype[0],
+        #                        best_solution.genotype[0] - u_baseline])
     evo_history.fitness_history_boxplots(values_to_plot='normed_min', save_to_file=False, gens_ticks=25)
     storage.save_run(key=run_key, evo_history=evo_history)
 
